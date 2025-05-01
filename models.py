@@ -59,7 +59,6 @@ class User(UserMixin, db.Model):
         key = base64.urlsafe_b64decode(self.encryption_key.encode('utf-8'))
         return Fernet(key)
         
-    @property
     def has_premium_features(self):
         """Check if the user has access to premium features"""
         return self.is_premium and self.subscription_status == 'active'
