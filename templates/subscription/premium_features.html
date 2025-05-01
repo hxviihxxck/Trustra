@@ -32,11 +32,54 @@
                     Thank you for your premium subscription! Customize your experience and access exclusive features.
                 </p>
             </div>
-            <div class="mt-4 md:mt-0">
+            <div class="mt-4 md:mt-0 flex space-x-2">
                 <a href="{{ url_for('subscription.manage') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
                     <i class="fas fa-cog mr-2"></i>
                     Manage Subscription
                 </a>
+                
+                {% if current_user.subscription_status == 'active' %}
+                <!-- Direct Cancel Button -->
+                <form action="{{ url_for('subscription.cancel_subscription') }}" method="POST" id="quick-cancel-form" class="hidden">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                </form>
+                <button onclick="confirmCancelSubscription()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition">
+                    <i class="fas fa-times-circle mr-2"></i>
+                    Cancel
+                </button>
+                
+                <!-- Confirmation Modal -->
+                <div id="cancel-confirm-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Cancel Subscription?</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">
+                            Are you sure you want to cancel your subscription? You'll keep premium features until the end of your current billing period.
+                        </p>
+                        <div class="flex justify-end space-x-3">
+                            <button onclick="hideConfirmModal()" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Keep Subscription
+                            </button>
+                            <button onclick="cancelSubscription()" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                Yes, Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <script>
+                function confirmCancelSubscription() {
+                    document.getElementById('cancel-confirm-modal').classList.remove('hidden');
+                }
+                
+                function hideConfirmModal() {
+                    document.getElementById('cancel-confirm-modal').classList.add('hidden');
+                }
+                
+                function cancelSubscription() {
+                    document.getElementById('quick-cancel-form').submit();
+                }
+                </script>
+                {% endif %}
             </div>
         </div>
         

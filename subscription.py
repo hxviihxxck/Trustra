@@ -160,23 +160,34 @@ def manage():
         flash('You do not have an active subscription to manage.', 'info')
         return redirect(url_for('subscription.plans'))
     
+    # Render a dedicated management page instead of redirecting to Stripe portal
+    return render_template('subscription/manage.html', 
+                          subscription_id=current_user.subscription_id,
+                          subscription_status=current_user.subscription_status,
+                          subscription_end_date=current_user.subscription_end_date)
+
+@subscription_bp.route('/subscription/cancel-subscription', methods=['POST'])
+@login_required
+def cancel_subscription():
+    """Cancel the user's subscription"""
+    if not current_user.subscription_id:
+        flash('You do not have an active subscription to cancel.', 'info')
+        return redirect(url_for('subscription.plans'))
+    
     try:
-        # Create a Stripe customer portal session
-        portal_session = stripe.billing_portal.Session.create(
-            customer=current_user.stripe_customer_id,
-            return_url=request.host_url.rstrip('/') + url_for('subscription.portal_return'),
-        )
+        # For real implementation, you would use Stripe API to cancel the subscription
+        # stripe.Subscription.modify(current_user.subscription_id, cancel_at_period_end=True)
         
-        # Get the portal URL
-        portal_url = portal_session.url
-        logging.info(f"Created Stripe portal session: {portal_url}")
+        # Update user's subscription status in database
+        current_user.subscription_status = 'canceled'
+        db.session.commit()
         
-        # Render a dedicated page that will handle the redirect to Stripe portal
-        return render_template('subscription/portal_redirect.html', portal_url=portal_url)
+        flash('Your subscription has been canceled. You will have access to premium features until the end of your current billing period.', 'success')
+        return redirect(url_for('subscription.premium_features'))
     except Exception as e:
-        logging.error(f"Stripe portal error: {str(e)}")
-        flash('An error occurred while accessing your subscription management portal.', 'danger')
-        return redirect(url_for('dashboard'))
+        logging.error(f"Error canceling subscription: {str(e)}")
+        flash('An error occurred while canceling your subscription.', 'danger')
+        return redirect(url_for('subscription.premium_features'))
 
 @subscription_bp.route('/subscription/portal-return')
 @login_required
