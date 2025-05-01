@@ -1,91 +1,136 @@
 document.addEventListener('alpine:init', () => {
-    // Define Alpine.js data and methods for the chat widget
-    window.formatTimestamp = function(timestamp) {
-        const date = new Date(timestamp);
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    
-    window.sendMessage = function() {
-        if (!this.currentMessage.trim()) return;
+    // Register formatTimestamp as a global Alpine function
+    Alpine.data('chatWidget', () => ({
+        isOpen: false,
+        minimized: true,
+        messages: [],
+        currentMessage: '',
+        userEmail: '',
+        userName: '',
         
-        // Add user message to chat
-        this.messages.push({
-            sender: 'user',
-            content: this.currentMessage,
-            timestamp: new Date().toISOString()
-        });
-        
-        const userMessage = this.currentMessage;
-        this.currentMessage = '';
-        
-        // Scroll to bottom
-        this.$nextTick(() => {
-            const chatMessages = document.getElementById('chat-messages');
-            if (chatMessages) {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-        });
-        
-        // Simulate typing indicator
-        this.messages.push({
-            sender: 'system',
-            content: '...',
-            timestamp: new Date().toISOString(),
-            isTyping: true
-        });
-        
-        // Process the message on the backend
-        fetch('/chat/send', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: JSON.stringify({
-                message: userMessage,
-                userEmail: this.userEmail,
-                userName: this.userName
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Remove typing indicator
-            this.messages = this.messages.filter(msg => !msg.isTyping);
+        init() {
+            // Set user info if available
+            this.userEmail = this.$el.dataset.userEmail || '';
+            this.userName = this.$el.dataset.userName || '';
             
-            // Add response message
+            // Watch for chat open to add welcome message
+            this.$watch('isOpen', value => {
+                if (value && this.messages.length === 0) {
+                    this.messages.push({
+                        sender: 'system',
+                        content: 'Welcome to Trustra support chat! How can we help you today?',
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            });
+        },
+        
+        formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        },
+        
+        sendMessage() {
+            if (!this.currentMessage.trim()) return;
+            
+            // Add user message to chat
             this.messages.push({
-                sender: 'system',
-                content: data.response,
+                sender: 'user',
+                content: this.currentMessage,
                 timestamp: new Date().toISOString()
             });
             
-            // Scroll to bottom again
+            const userMessage = this.currentMessage;
+            this.currentMessage = '';
+            
+            // Scroll to bottom
             this.$nextTick(() => {
                 const chatMessages = document.getElementById('chat-messages');
                 if (chatMessages) {
                     chatMessages.scrollTop = chatMessages.scrollHeight;
                 }
             });
-        })
-        .catch(error => {
-            console.error('Error sending message:', error);
+            
+            // Simulate typing indicator
+            this.messages.push({
+                sender: 'system',
+                content: '...',
+                timestamp: new Date().toISOString(),
+                isTyping: true
+            });
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
+            // Process the message on the backend
+            fetch('/chat/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || ''
+                },
+                body: JSON.stringify({
+                    message: userMessage,
+                    userEmail: this.userEmail,
+                    userName: this.userName
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Remove typing indicator
+                this.messages = this.messages.filter(msg => !msg.isTyping);
+                
+                // Add response message
+                this.messages.push({
+                    sender: 'system',
+                    content: data.response,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Scroll to bottom again
+                this.$nextTick(() => {
+                    const chatMessages = document.getElementById('chat-messages');
+                    if (chatMessages) {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error sending message:', error);
+                
+                // For development, use fallback response when backend fails
+                this.handleFallbackResponse(userMessage);
+            });
+        },
+        
+        handleFallbackResponse(userMessage) {
             // Remove typing indicator
             this.messages = this.messages.filter(msg => !msg.isTyping);
             
-            // Add error message
+            // Generate fallback response based on keywords
+            let response = getSimulatedResponse(userMessage);
+            
+            // Add response message
             this.messages.push({
                 sender: 'system',
-                content: 'Sorry, there was an error processing your message. Please try again.',
+                content: response,
                 timestamp: new Date().toISOString()
             });
-        });
-    }
-    
-    // Helper function to get CSRF token
-    function getCsrfToken() {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        return csrfToken || '';
-    }
+            
+            // Scroll to bottom
+            this.$nextTick(() => {
+                const chatMessages = document.getElementById('chat-messages');
+                if (chatMessages) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            });
+        }
+    }));
 });
 
 // Fallback responses when backend is not available or in development

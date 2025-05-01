@@ -13,4 +13,5 @@ dependencies = [
     "flask-wtf>=1.2.2",
     "cryptography>=44.0.2",
     "stripe>=12.1.0",
+    "openai>=1.76.2",
 ]

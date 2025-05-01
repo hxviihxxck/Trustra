@@ -1,16 +1,10 @@
 {% macro chat_widget() %}
 {% if session %}
-<div id="chat-widget" x-data="{ isOpen: false, minimized: true, messages: [], currentMessage: '', userEmail: '{{ current_user.email if current_user and current_user.is_authenticated else '' }}', userName: '{{ current_user.username if current_user and current_user.is_authenticated else '' }}' }"
-     class="fixed bottom-4 right-4 z-50 flex flex-col"
-     x-init="$watch('isOpen', value => { 
-         if (value && messages.length === 0) {
-             messages.push({
-                 sender: 'system',
-                 content: 'Welcome to Trustra support chat! How can we help you today?',
-                 timestamp: new Date().toISOString()
-             });
-         }
-     })">
+<div id="chat-widget" 
+     x-data="chatWidget"
+     data-user-email="{{ current_user.email if current_user and current_user.is_authenticated else '' }}"
+     data-user-name="{{ current_user.username if current_user and current_user.is_authenticated else '' }}"
+     class="fixed bottom-4 right-4 z-50 flex flex-col">
     
     <!-- Chat button -->
     <button @click="isOpen = !isOpen; minimized = false" 
