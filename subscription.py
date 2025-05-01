@@ -2,7 +2,7 @@ import os
 import stripe
 import logging
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, current_app, session
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, current_app, session, Response
 from flask_login import login_required, current_user
 from app import db
 from models import User
@@ -95,7 +95,28 @@ def create_checkout_session():
             }
         )
         
-        return redirect(checkout_session.url, code=303)
+        # Log the checkout URL and redirect
+        checkout_url = checkout_session.url
+        logging.info(f"Redirecting to Stripe checkout: {checkout_url}")
+        
+        # Add Javascript redirect to the template to handle external redirects better
+        html_content = f"""
+        <html>
+            <head>
+                <title>Redirecting to Stripe...</title>
+                <script>
+                    window.location.href = "{checkout_url}";
+                </script>
+                <meta http-equiv="refresh" content="0;url={checkout_url}">
+            </head>
+            <body>
+                <p>Redirecting to Stripe checkout...</p>
+                <p>If you are not redirected, <a href="{checkout_url}">click here</a>.</p>
+            </body>
+        </html>
+        """
+        
+        return Response(html_content, mimetype='text/html')
     except Exception as e:
         logging.error(f"Stripe error: {str(e)}")
         flash('An error occurred while processing your subscription request. Please try again.', 'danger')
@@ -156,7 +177,29 @@ def manage():
             customer=current_user.stripe_customer_id,
             return_url=request.host_url.rstrip('/') + url_for('subscription.portal_return'),
         )
-        return redirect(portal_session.url, code=303)
+        
+        # Get the portal URL
+        portal_url = portal_session.url
+        logging.info(f"Redirecting to Stripe portal: {portal_url}")
+        
+        # Create a redirect page
+        html_content = f"""
+        <html>
+            <head>
+                <title>Redirecting to Stripe Portal...</title>
+                <script>
+                    window.location.href = "{portal_url}";
+                </script>
+                <meta http-equiv="refresh" content="0;url={portal_url}">
+            </head>
+            <body>
+                <p>Redirecting to Stripe customer portal...</p>
+                <p>If you are not redirected, <a href="{portal_url}">click here</a>.</p>
+            </body>
+        </html>
+        """
+        
+        return Response(html_content, mimetype='text/html')
     except Exception as e:
         logging.error(f"Stripe portal error: {str(e)}")
         flash('An error occurred while accessing your subscription management portal.', 'danger')
