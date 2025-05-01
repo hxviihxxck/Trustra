@@ -42,6 +42,7 @@ class User(UserMixin, db.Model):
     geo_access_enabled = db.Column(db.Boolean, default=False)
     allowed_regions = db.Column(db.Text, nullable=True)  # JSON list of allowed regions/IPs
     auto_logout_minutes = db.Column(db.Integer, default=15)  # Inactivity timeout
+    decoy_password_hash = db.Column(db.String(256), nullable=True)  # For hidden vault mode
     
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)

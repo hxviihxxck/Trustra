@@ -1,5 +1,5 @@
 import logging
-from flask import render_template, url_for, flash, redirect, request, jsonify
+from flask import render_template, url_for, flash, redirect, request, jsonify, session
 from flask_login import login_user, current_user, logout_user, login_required
 from app import app, db
 from models import User, PasswordEntry
@@ -66,13 +66,36 @@ def login():
     if form.validate_on_submit():
         try:
             user = User.query.filter_by(email=form.email.data).first()
+            
+            # Check if this is a normal login
             if user and user.check_password(form.password.data):
+                # Regular successful login
                 login_user(user, remember=form.remember.data)
                 next_page = request.args.get('next')
+                
+                # Set session flag to indicate normal mode
+                session['hidden_vault_mode'] = False
+                
                 flash('Login successful!', 'success')
                 return redirect(next_page if next_page else url_for('dashboard'))
-            else:
-                flash('Login unsuccessful. Please check your email and password.', 'danger')
+            
+            # Check if this is a hidden vault mode login
+            # Only check if normal login failed and user has premium features with hidden vault
+            elif user and user.has_premium_features() and user.decoy_password_hash:
+                from werkzeug.security import check_password_hash
+                
+                if check_password_hash(user.decoy_password_hash, form.password.data):
+                    # Hidden vault mode login
+                    login_user(user, remember=form.remember.data)
+                    
+                    # Set session flag for hidden vault mode
+                    session['hidden_vault_mode'] = True
+                    
+                    flash('Login successful!', 'success')
+                    return redirect(url_for('dashboard'))
+            
+            # If we get here, login failed            
+            flash('Login unsuccessful. Please check your email and password.', 'danger')
         except Exception as e:
             logging.error(f"Login error: {str(e)}")
             flash('An unexpected error occurred. Please try again.', 'danger')
@@ -93,23 +116,38 @@ def dashboard():
     search_form = SearchForm()
     query = request.args.get('query', '')
     
+    # Check if we're in hidden vault mode
+    hidden_vault_mode = session.get('hidden_vault_mode', False)
+    
+    # Base query - always filter by user ID
+    base_query = PasswordEntry.query.filter_by(user_id=current_user.id)
+    
+    # If in hidden vault mode, only show non-hidden passwords
+    # If in normal mode, hide the passwords marked as hidden
+    if hidden_vault_mode:
+        # In hidden vault mode, only show non-hidden passwords
+        base_query = base_query.filter_by(is_hidden=False)
+    else:
+        # In normal mode, check if user has hidden passwords
+        if current_user.has_premium_features() and current_user.decoy_password_hash:
+            base_query = base_query.filter_by(is_hidden=False)
+    
+    # Apply search query if exists
     if query:
         # Search in password entries
-        passwords = PasswordEntry.query.filter(
-            PasswordEntry.user_id == current_user.id,
+        passwords = base_query.filter(
             (PasswordEntry.title.ilike(f'%{query}%') | 
              PasswordEntry.username.ilike(f'%{query}%') | 
              PasswordEntry.url.ilike(f'%{query}%') | 
              PasswordEntry.category.ilike(f'%{query}%'))
         ).order_by(PasswordEntry.date_updated.desc()).all()
     else:
-        # Get all password entries for the current user
-        passwords = PasswordEntry.query.filter_by(
-            user_id=current_user.id
-        ).order_by(PasswordEntry.date_updated.desc()).all()
+        # Get filtered password entries
+        passwords = base_query.order_by(PasswordEntry.date_updated.desc()).all()
     
     return render_template('dashboard.html', title='Dashboard', 
-                          passwords=passwords, search_form=search_form, query=query)
+                          passwords=passwords, search_form=search_form, 
+                          query=query, hidden_vault_mode=hidden_vault_mode)
 
 # Add a new password
 @app.route('/add-password', methods=['GET', 'POST'])
