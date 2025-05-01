@@ -19,6 +19,9 @@ class User(UserMixin, db.Model):
     passwords = db.relationship('PasswordEntry', backref='owner', lazy='dynamic', cascade="all, delete-orphan")
     date_joined = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # User role fields
+    is_admin = db.Column(db.Boolean, default=False)  # Admin flag for staff access
+    
     # Subscription-related fields
     is_premium = db.Column(db.Boolean, default=False)
     stripe_customer_id = db.Column(db.String(255), nullable=True)

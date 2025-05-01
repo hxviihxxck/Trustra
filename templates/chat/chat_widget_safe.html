@@ -1,9 +1,9 @@
 {% macro chat_widget() %}
-{% if session %}
+{% if true %}
 <div id="chat-widget" 
      x-data="chatWidget"
-     data-user-email="{{ current_user.email if current_user and current_user.is_authenticated else '' }}"
-     data-user-name="{{ current_user.username if current_user and current_user.is_authenticated else '' }}"
+     data-user-email="{{ current_user.email if current_user and current_user.is_authenticated else 'guest' }}"
+     data-user-name="{{ current_user.username if current_user and current_user.is_authenticated else 'Guest' }}"
      class="fixed bottom-4 right-4 z-50 flex flex-col">
     
     <!-- Chat button -->
