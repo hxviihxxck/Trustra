@@ -77,17 +77,28 @@
         </div>
         
         <!-- Chat input -->
-        <div x-show="!minimized" class="p-3 border-t border-gray-200 dark:border-gray-700">
-            <form @submit.prevent="sendMessage()" class="flex space-x-2">
-                <input type="text" x-model="currentMessage" @keydown.enter="sendMessage()"
-                       class="flex-1 border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
-                       placeholder="Type your message...">
-                <button type="submit" 
-                        class="bg-primary-600 hover:bg-primary-700 text-white rounded-full p-2 focus:outline-none disabled:opacity-50"
-                        :disabled="!currentMessage.trim()">
-                    <i class="fas fa-paper-plane"></i>
+        <div x-show="!minimized" class="border-t border-gray-200 dark:border-gray-700">
+            <!-- Human support button -->
+            <div class="px-3 pt-2">
+                <button @click="currentMessage = 'I would like to speak to a human support agent please.'; sendMessage()" 
+                        class="w-full text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 focus:outline-none mb-2">
+                    <i class="fas fa-user-headset mr-1"></i> Connect with a live team member
                 </button>
-            </form>
+            </div>
+            
+            <!-- Message input -->
+            <div class="p-3">
+                <form @submit.prevent="sendMessage()" class="flex space-x-2">
+                    <input type="text" x-model="currentMessage" @keydown.enter="sendMessage()"
+                           class="flex-1 border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                           placeholder="Type your message...">
+                    <button type="submit" 
+                            class="bg-primary-600 hover:bg-primary-700 text-white rounded-full p-2 focus:outline-none disabled:opacity-50"
+                            :disabled="!currentMessage.trim()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
