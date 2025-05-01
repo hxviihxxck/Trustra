@@ -35,7 +35,8 @@ with app.app_context():
         "emergency_request_date": Column(DateTime, nullable=True),
         "geo_access_enabled": Column(Boolean, default=False),
         "allowed_regions": Column(Text, nullable=True),
-        "auto_logout_minutes": Column(Integer, default=15)
+        "auto_logout_minutes": Column(Integer, default=15),
+        "decoy_password_hash": Column(String(256), nullable=True)
     }
     
     # Password entry columns to add if missing

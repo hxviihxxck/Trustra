@@ -328,7 +328,7 @@
                         
                         <div class="mb-4">
                             <label class="inline-flex items-center">
-                                <input type="checkbox" name="enable_hidden_vault" class="rounded text-gray-500 focus:ring-gray-500">
+                                <input type="checkbox" name="enable_hidden_vault" {{ 'checked' if current_user.decoy_password_hash else '' }} class="rounded text-gray-500 focus:ring-gray-500">
                                 <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Enable Hidden Vault Mode</span>
                             </label>
                         </div>
