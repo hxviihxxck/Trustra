@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Redirecting to Stripe Customer Portal{% endblock %}
+
+{% block content %}
+<div class="container mx-auto py-10 px-4">
+    <div class="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 border border-gray-200 dark:border-gray-700">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Stripe Customer Portal</h1>
+            <p class="text-gray-600 dark:text-gray-300">Your customer portal session is ready.</p>
+        </div>
+        
+        <div class="flex flex-col items-center text-center mb-8">
+            <i class="fas fa-user-cog text-5xl text-blue-500 mb-4"></i>
+            <p class="text-gray-700 dark:text-gray-300 mb-6">You'll be redirected to Stripe's customer portal where you can manage your subscription settings.</p>
+            
+            <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-lg p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-1">Manage Your Subscription</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">You can update your payment method, view billing history, or cancel your subscription.</p>
+            </div>
+            
+            <a href="{{ portal_url }}" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition-colors flex items-center justify-center">
+                <i class="fas fa-external-link-alt mr-2"></i>
+                Go to Customer Portal
+            </a>
+            
+            <p class="text-gray-500 dark:text-gray-400 text-xs mt-4">
+                If the button doesn't work, you can also <a href="{{ portal_url }}" target="_blank" class="text-blue-600 hover:underline">click here</a> to open the customer portal.
+            </p>
+        </div>
+        
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-6 text-center">
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+                <i class="fas fa-shield-alt mr-1"></i>
+                Your subscription is managed securely by Stripe. Your payment information is never stored on our servers.
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                <a href="{{ url_for('dashboard') }}" class="text-blue-600 hover:underline">
+                    <i class="fas fa-arrow-left mr-1"></i>
+                    Return to dashboard
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-click the button after a short delay
+    setTimeout(function() {
+        // Display a message that we're opening Stripe
+        document.getElementById('autoOpen').style.display = 'block';
+        // Open the Stripe portal URL automatically
+        window.open('{{ portal_url }}', '_blank');
+    }, 1500);
+</script>
+
+<div id="autoOpen" class="fixed bottom-4 right-4 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-4 py-3 rounded-lg shadow-md hidden">
+    <p>
+        <i class="fas fa-check-circle mr-2"></i>
+        Opening Stripe customer portal in a new tab...
+    </p>
+</div>
+{% endblock %}
