@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}SecureVault - Secure Password Manager{% endblock %}
+
+{% block content %}
+<div class="fade-in flex flex-col md:flex-row items-center justify-between py-8">
+    <div class="md:w-1/2 mb-8 md:mb-0">
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-4">
+            Secure Password Management Made Simple
+        </h1>
+        <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">
+            Store, manage, and access your passwords securely with industry-standard encryption. 
+            Take control of your digital security with SecureVault.
+        </p>
+        <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <a href="{{ url_for('register') }}" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition">
+                Get Started
+                <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+            <a href="{{ url_for('login') }}" class="inline-flex items-center justify-center px-5 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition">
+                Log In
+                <i class="fas fa-sign-in-alt ml-2"></i>
+            </a>
+        </div>
+    </div>
+    <div class="md:w-1/2 flex justify-center">
+        <div class="w-full max-w-md bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-gray-700">
+                    <div class="text-lg font-semibold text-gray-800 dark:text-white">
+                        <i class="fas fa-shield-alt text-primary-500 mr-2"></i>
+                        Why Choose SecureVault?
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-lock text-green-500 mt-1"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-gray-800 dark:text-white">End-to-End Encryption</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Your data is encrypted with industry-standard algorithms</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-user-shield text-green-500 mt-1"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-gray-800 dark:text-white">Private & Secure</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Your data never leaves your device unencrypted</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-mobile-alt text-green-500 mt-1"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-gray-800 dark:text-white">Mobile Responsive</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Access your passwords from any device</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-moon text-green-500 mt-1"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-gray-800 dark:text-white">Dark Mode Support</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Easy on the eyes, day or night</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-12 bg-gray-100 dark:bg-gray-800 rounded-lg p-8">
+    <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Features</h2>
+        <p class="text-gray-600 dark:text-gray-300 mt-2">Everything you need for secure password management</p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-600 transition-transform hover:transform hover:scale-105">
+            <div class="text-primary-500 mb-4">
+                <i class="fas fa-key text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">Password Vault</h3>
+            <p class="text-gray-600 dark:text-gray-300">Store all your passwords in one secure location with strong encryption.</p>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-600 transition-transform hover:transform hover:scale-105">
+            <div class="text-primary-500 mb-4">
+                <i class="fas fa-copy text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">One-Click Copy</h3>
+            <p class="text-gray-600 dark:text-gray-300">Copy usernames and passwords to clipboard with a single click.</p>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-600 transition-transform hover:transform hover:scale-105">
+            <div class="text-primary-500 mb-4">
+                <i class="fas fa-eye-slash text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">Show/Hide Passwords</h3>
+            <p class="text-gray-600 dark:text-gray-300">Toggle visibility of passwords with a single click when needed.</p>
+        </div>
+    </div>
+</div>
+
+<div class="mt-12 text-center">
+    <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-4">Ready to secure your passwords?</h2>
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">Sign up today and take control of your digital security.</p>
+    <a href="{{ url_for('register') }}" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition">
+        Create Your Secure Vault
+        <i class="fas fa-lock ml-2"></i>
+    </a>
+</div>
+{% endblock %}

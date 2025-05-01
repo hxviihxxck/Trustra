@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Register - SecureVault{% endblock %}
+
+{% block content %}
+<div class="fade-in max-w-md mx-auto">
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg px-8 pt-6 pb-8 mb-4 border border-gray-200 dark:border-gray-700">
+        <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">
+                <i class="fas fa-user-plus mr-2 text-primary-500"></i>
+                Create an Account
+            </h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                Sign up to start managing your passwords securely
+            </p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('register') }}">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2" for="{{ form.username.id }}">
+                    Username
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-user text-gray-400"></i>
+                    </div>
+                    {{ form.username(class="shadow appearance-none border rounded w-full py-2 pl-10 pr-3 text-gray-700 dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-primary-500 focus:border-primary-500", placeholder="johndoe") }}
+                </div>
+                {% if form.username.errors %}
+                    <div class="text-red-500 text-xs italic mt-1">
+                        {% for error in form.username.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2" for="{{ form.email.id }}">
+                    Email Address
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-envelope text-gray-400"></i>
+                    </div>
+                    {{ form.email(class="shadow appearance-none border rounded w-full py-2 pl-10 pr-3 text-gray-700 dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-primary-500 focus:border-primary-500", placeholder="youremail@example.com") }}
+                </div>
+                {% if form.email.errors %}
+                    <div class="text-red-500 text-xs italic mt-1">
+                        {% for error in form.email.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2" for="{{ form.password.id }}">
+                    Password
+                </label>
+                <div class="relative" x-data="{ show: false }">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-lock text-gray-400"></i>
+                    </div>
+                    <input type="password" id="{{ form.password.id }}" name="{{ form.password.name }}" 
+                           x-bind:type="show ? 'text' : 'password'"
+                           class="shadow appearance-none border rounded w-full py-2 pl-10 pr-10 text-gray-700 dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                           placeholder="••••••••" required>
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <button type="button" @click="show = !show" class="text-gray-500 focus:outline-none">
+                            <i x-show="!show" class="fas fa-eye"></i>
+                            <i x-show="show" class="fas fa-eye-slash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% if form.password.errors %}
+                    <div class="text-red-500 text-xs italic mt-1">
+                        {% for error in form.password.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">At least 8 characters</p>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2" for="{{ form.confirm_password.id }}">
+                    Confirm Password
+                </label>
+                <div class="relative" x-data="{ show: false }">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-lock text-gray-400"></i>
+                    </div>
+                    <input type="password" id="{{ form.confirm_password.id }}" name="{{ form.confirm_password.name }}" 
+                           x-bind:type="show ? 'text' : 'password'"
+                           class="shadow appearance-none border rounded w-full py-2 pl-10 pr-10 text-gray-700 dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                           placeholder="••••••••" required>
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <button type="button" @click="show = !show" class="text-gray-500 focus:outline-none">
+                            <i x-show="!show" class="fas fa-eye"></i>
+                            <i x-show="show" class="fas fa-eye-slash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% if form.confirm_password.errors %}
+                    <div class="text-red-500 text-xs italic mt-1">
+                        {% for error in form.confirm_password.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="flex items-center justify-between">
+                {{ form.submit(class="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150 ease-in-out") }}
+                <a class="inline-block align-baseline font-bold text-sm text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300" href="{{ url_for('login') }}">
+                    Already have an account?
+                </a>
+            </div>
+        </form>
+    </div>
+    <p class="text-center text-gray-500 text-xs dark:text-gray-400">
+        &copy; 2025 SecureVault Password Manager. All rights reserved.
+    </p>
+</div>
+{% endblock %}

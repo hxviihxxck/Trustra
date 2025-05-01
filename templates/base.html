@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Secure Password Manager{% endblock %}</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {"50":"#eff6ff","100":"#dbeafe","200":"#bfdbfe","300":"#93c5fd","400":"#60a5fa","500":"#3b82f6","600":"#2563eb","700":"#1d4ed8","800":"#1e40af","900":"#1e3a8a"},
+                    }
+                }
+            },
+        }
+    </script>
+    
+    <!-- Alpine.js via CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.12.0/dist/cdn.min.js"></script>
+    
+    <!-- Font Awesome via CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    
+    <style>
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .toast-notification {
+            transition: all 0.3s ease;
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" 
+      x-init="$watch('darkMode', val => { localStorage.setItem('darkMode', val); document.documentElement.classList.toggle('dark', val) })"
+      :class="{ 'dark': darkMode }">
+    
+    <!-- Navigation Bar -->
+    <nav class="bg-white dark:bg-gray-800 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <a href="{{ url_for('index') }}" class="text-primary-600 dark:text-primary-400 font-bold text-xl">
+                            <i class="fas fa-lock mr-2"></i>SecureVault
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="flex items-center">
+                    <!-- Dark Mode Toggle -->
+                    <button @click="darkMode = !darkMode" 
+                            class="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
+                        <span x-show="!darkMode" class="text-yellow-500">
+                            <i class="fas fa-sun"></i>
+                        </span>
+                        <span x-show="darkMode" class="text-blue-300">
+                            <i class="fas fa-moon"></i>
+                        </span>
+                    </button>
+                    
+                    <!-- Navigation Links -->
+                    <div class="ml-4 flex items-center space-x-4">
+                        {% if current_user.is_authenticated %}
+                            <a href="{{ url_for('dashboard') }}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium">
+                                Dashboard
+                            </a>
+                            <a href="{{ url_for('add_password') }}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium">
+                                Add Password
+                            </a>
+                            <a href="{{ url_for('logout') }}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium">
+                                Logout
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('login') }}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium">
+                                Login
+                            </a>
+                            <a href="{{ url_for('register') }}" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium">
+                                Register
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Flash Messages -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 5000)" x-show="show" 
+                     class="toast-notification">
+                    {% for category, message in messages %}
+                        {% set alert_class = "" %}
+                        {% if category == "success" %}
+                            {% set alert_class = "bg-green-100 border-green-500 text-green-700 dark:bg-green-800 dark:text-green-100" %}
+                        {% elif category == "info" %}
+                            {% set alert_class = "bg-blue-100 border-blue-500 text-blue-700 dark:bg-blue-800 dark:text-blue-100" %}
+                        {% elif category == "warning" %}
+                            {% set alert_class = "bg-yellow-100 border-yellow-500 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-100" %}
+                        {% elif category == "danger" %}
+                            {% set alert_class = "bg-red-100 border-red-500 text-red-700 dark:bg-red-800 dark:text-red-100" %}
+                        {% else %}
+                            {% set alert_class = "bg-gray-100 border-gray-500 text-gray-700 dark:bg-gray-800 dark:text-gray-100" %}
+                        {% endif %}
+                        
+                        <div class="fade-in border-l-4 p-4 mb-3 rounded shadow-sm {{ alert_class }}">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    {% if category == "success" %}
+                                        <i class="fas fa-check-circle"></i>
+                                    {% elif category == "info" %}
+                                        <i class="fas fa-info-circle"></i>
+                                    {% elif category == "warning" %}
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    {% elif category == "danger" %}
+                                        <i class="fas fa-times-circle"></i>
+                                    {% else %}
+                                        <i class="fas fa-bell"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm">{{ message }}</p>
+                                </div>
+                                <div class="ml-auto pl-3">
+                                    <div class="-mx-1.5 -my-1.5">
+                                        <button @click="show = false" class="inline-flex rounded-md p-1.5 focus:outline-none transition duration-150 ease-in-out">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+    
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-gray-800 shadow-inner mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="text-gray-600 dark:text-gray-400 text-sm">
+                    &copy; 2025 SecureVault Password Manager. All rights reserved.
+                </div>
+                <div class="text-gray-600 dark:text-gray-400 text-sm">
+                    <span>Secure. Private. Simple.</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
