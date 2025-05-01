@@ -36,24 +36,13 @@ subscription_bp = Blueprint('subscription', __name__)
 @login_required
 def plans():
     """Display available subscription plans"""
-    monthly_form = SubscriptionForm(plan_id='monthly')
-    yearly_form = SubscriptionForm(plan_id='yearly')
-    return render_template('subscription/plans.html', 
-                          plans=SUBSCRIPTION_PLANS,
-                          monthly_form=monthly_form,
-                          yearly_form=yearly_form)
+    return render_template('subscription/plans.html', plans=SUBSCRIPTION_PLANS)
 
 @subscription_bp.route('/subscription/create-checkout-session', methods=['POST'])
 @login_required
 def create_checkout_session():
     """Create a Stripe checkout session for subscription"""
-    form = SubscriptionForm()
-    
-    if not form.validate_on_submit():
-        flash('Invalid form submission. Please try again.', 'danger')
-        return redirect(url_for('subscription.plans'))
-    
-    plan_id = form.plan_id.data
+    plan_id = request.form.get('plan_id')
     
     if plan_id not in SUBSCRIPTION_PLANS:
         flash('Invalid subscription plan selected.', 'danger')
