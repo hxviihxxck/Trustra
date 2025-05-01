@@ -332,6 +332,9 @@ class PasswordHistory(db.Model):
     def get_old_password(self, user):
         """Decrypt the old password value"""
         try:
+            if not self.old_value_encrypted:
+                return "No previous password data"
+                
             fernet = user.get_fernet()
             return fernet.decrypt(self.old_value_encrypted).decode('utf-8')
         except Exception as e:

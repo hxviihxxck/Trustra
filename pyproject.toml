@@ -15,4 +15,5 @@ dependencies = [
     "stripe>=12.1.0",
     "openai>=1.76.2",
     "slack-sdk>=3.35.0",
+    "sendgrid>=6.11.0",
 ]
