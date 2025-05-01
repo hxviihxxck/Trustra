@@ -1,0 +1,488 @@
+{% extends "base.html" %}
+
+{% block title %}Premium Features - SecureVault{% endblock %}
+
+{% block extra_head %}
+<style>
+    .feature-card {
+        transition: all 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+    .theme-preview {
+        height: 80px;
+        transition: all 0.3s ease;
+    }
+    .theme-preview:hover {
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in max-w-6xl mx-auto">
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg px-6 py-6 mb-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex flex-col md:flex-row justify-between items-start mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+                    <i class="fas fa-crown text-yellow-500 mr-2"></i>Premium Features
+                </h1>
+                <p class="text-gray-600 dark:text-gray-400">
+                    Thank you for your premium subscription! Customize your experience and access exclusive features.
+                </p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <a href="{{ url_for('subscription.manage') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+                    <i class="fas fa-cog mr-2"></i>
+                    Manage Subscription
+                </a>
+            </div>
+        </div>
+        
+        <!-- Password Health Score -->
+        <div class="bg-blue-50 dark:bg-blue-900 rounded-lg p-4 mb-6">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-3 flex items-center">
+                <i class="fas fa-heartbeat text-red-500 mr-2"></i>
+                Password Health
+            </h2>
+            
+            <!-- Overall health score -->
+            <div class="flex flex-col md:flex-row items-center justify-between">
+                <div class="mb-4 md:mb-0">
+                    <div class="relative h-40 w-40">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="text-4xl font-bold 
+                                {% if current_user.password_score >= 80 %}text-green-600 dark:text-green-400
+                                {% elif current_user.password_score >= 60 %}text-yellow-600 dark:text-yellow-400
+                                {% else %}text-red-600 dark:text-red-400{% endif %}">
+                                {{ current_user.password_score }}
+                            </span>
+                        </div>
+                        <svg class="h-40 w-40" viewBox="0 0 100 100">
+                            <!-- Background circle -->
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8" />
+                            
+                            <!-- Foreground circle representing the score -->
+                            <circle cx="50" cy="50" r="45" fill="none"
+                                {% if current_user.password_score >= 80 %}stroke="#10b981"
+                                {% elif current_user.password_score >= 60 %}stroke="#f59e0b"
+                                {% else %}stroke="#ef4444"{% endif %}
+                                stroke-width="8"
+                                stroke-linecap="round"
+                                stroke-dasharray="{{ current_user.password_score * 2.83 }}, 283"
+                                transform="rotate(-90 50 50)"
+                            />
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="flex-grow md:ml-6">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Your Password Health Score</h3>
+                    
+                    <!-- Conditional message based on score -->
+                    {% if current_user.password_score >= 80 %}
+                        <p class="text-green-600 dark:text-green-400 font-medium mb-2">Excellent! Your passwords are strong and diverse.</p>
+                    {% elif current_user.password_score >= 60 %}
+                        <p class="text-yellow-600 dark:text-yellow-400 font-medium mb-2">Good, but there's room for improvement.</p>
+                    {% else %}
+                        <p class="text-red-600 dark:text-red-400 font-medium mb-2">Your password security needs attention.</p>
+                    {% endif %}
+                    
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">
+                        Last updated: {{ current_user.last_password_check.strftime('%Y-%m-%d %H:%M') if current_user.last_password_check else 'Never' }}
+                    </p>
+                    
+                    <div class="space-y-2">
+                        <!-- Tips based on score -->
+                        {% if current_user.password_score < 80 %}
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 h-5 w-5 text-blue-500">
+                                    <i class="fas fa-lightbulb"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-gray-700 dark:text-gray-300">Try to use longer passwords (12+ characters) with a mix of letters, numbers, and symbols.</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if current_user.password_score < 70 %}
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 h-5 w-5 text-blue-500">
+                                    <i class="fas fa-lightbulb"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-gray-700 dark:text-gray-300">Avoid using the same password across different accounts.</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 h-5 w-5 text-blue-500">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-gray-700 dark:text-gray-300">Consider updating passwords that haven't been changed in over a year.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <form action="{{ url_for('premium.update_password_score') }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <i class="fas fa-sync-alt mr-2"></i> Refresh Score
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Feature Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Breach Monitoring -->
+            <div x-data="{ open: false }" class="feature-card bg-white dark:bg-gray-700 rounded-lg shadow border border-gray-200 dark:border-gray-600 overflow-hidden">
+                <div class="p-5">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+                            <i class="fas fa-shield-alt text-red-500 mr-2"></i> Breach Monitoring
+                        </h3>
+                        <button @click="open = !open" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                            <i class="fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        </button>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mt-2">
+                        Your accounts are monitored for data breaches. Get alerts if your credentials are compromised.
+                    </p>
+                </div>
+                
+                <div x-show="open" x-collapse class="bg-gray-50 dark:bg-gray-800 p-5 border-t border-gray-200 dark:border-gray-600">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Monitoring Status</label>
+                        <div class="flex items-center">
+                            <span class="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                <i class="fas fa-check-circle mr-1"></i> Active
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Last Scan</label>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Today, 10:45 AM</span>
+                            <form action="{{ url_for('premium.check_breaches') }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                    Scan Now
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Custom Themes -->
+            <div x-data="{ open: false }" class="feature-card bg-white dark:bg-gray-700 rounded-lg shadow border border-gray-200 dark:border-gray-600 overflow-hidden">
+                <div class="p-5">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+                            <i class="fas fa-paint-brush text-purple-500 mr-2"></i> Custom Themes
+                        </h3>
+                        <button @click="open = !open" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                            <i class="fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        </button>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mt-2">
+                        Customize your vault with exclusive premium themes.
+                    </p>
+                </div>
+                
+                <div x-show="open" x-collapse class="bg-gray-50 dark:bg-gray-800 p-5 border-t border-gray-200 dark:border-gray-600">
+                    <form action="{{ url_for('premium.set_theme') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div>
+                                <input type="radio" id="theme_default" name="theme" value="default" class="hidden peer" {{ 'checked' if current_user.selected_theme == 'default' else '' }}>
+                                <label for="theme_default" class="block cursor-pointer theme-preview rounded-md overflow-hidden border-2 peer-checked:border-blue-500 peer-checked:ring-2 peer-checked:ring-blue-500">
+                                    <div class="h-full bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center text-xs">Default</div>
+                                </label>
+                            </div>
+                            
+                            <div>
+                                <input type="radio" id="theme_cyberpunk" name="theme" value="cyberpunk" class="hidden peer" {{ 'checked' if current_user.selected_theme == 'cyberpunk' else '' }}>
+                                <label for="theme_cyberpunk" class="block cursor-pointer theme-preview rounded-md overflow-hidden border-2 peer-checked:border-blue-500 peer-checked:ring-2 peer-checked:ring-blue-500">
+                                    <div class="h-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center text-white text-xs">Cyberpunk</div>
+                                </label>
+                            </div>
+                            
+                            <div>
+                                <input type="radio" id="theme_neon" name="theme" value="neon" class="hidden peer" {{ 'checked' if current_user.selected_theme == 'neon' else '' }}>
+                                <label for="theme_neon" class="block cursor-pointer theme-preview rounded-md overflow-hidden border-2 peer-checked:border-blue-500 peer-checked:ring-2 peer-checked:ring-blue-500">
+                                    <div class="h-full bg-black flex items-center justify-center text-green-400 text-xs">Neon Dark</div>
+                                </label>
+                            </div>
+                            
+                            <div>
+                                <input type="radio" id="theme_solarized" name="theme" value="solarized" class="hidden peer" {{ 'checked' if current_user.selected_theme == 'solarized' else '' }}>
+                                <label for="theme_solarized" class="block cursor-pointer theme-preview rounded-md overflow-hidden border-2 peer-checked:border-blue-500 peer-checked:ring-2 peer-checked:ring-blue-500">
+                                    <div class="h-full bg-yellow-50 dark:bg-yellow-900 flex items-center justify-center text-yellow-800 dark:text-yellow-100 text-xs">Solarized</div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                            <i class="fas fa-check mr-2"></i> Apply Theme
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Emergency Access -->
+            <div x-data="{ open: false }" class="feature-card bg-white dark:bg-gray-700 rounded-lg shadow border border-gray-200 dark:border-gray-600 overflow-hidden">
+                <div class="p-5">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+                            <i class="fas fa-ambulance text-orange-500 mr-2"></i> Emergency Access
+                        </h3>
+                        <button @click="open = !open" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                            <i class="fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        </button>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mt-2">
+                        Set up trusted contacts who can access your vault in case of emergency.
+                    </p>
+                </div>
+                
+                <div x-show="open" x-collapse class="bg-gray-50 dark:bg-gray-800 p-5 border-t border-gray-200 dark:border-gray-600">
+                    <form action="{{ url_for('premium.setup_emergency_access') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="emergency_contact">
+                                Trusted Contact Email
+                            </label>
+                            <input type="email" id="emergency_contact" name="emergency_contact" value="{{ current_user.emergency_contact_email or '' }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="trusted-person@example.com">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="waiting_period">
+                                Waiting Period
+                            </label>
+                            <select id="waiting_period" name="waiting_period" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                <option value="1" {{ 'selected' if current_user.emergency_wait_time_days == 1 else '' }}>1 day</option>
+                                <option value="3" {{ 'selected' if current_user.emergency_wait_time_days == 3 else '' }}>3 days</option>
+                                <option value="7" {{ 'selected' if current_user.emergency_wait_time_days == 7 else '' }}>7 days</option>
+                                <option value="14" {{ 'selected' if current_user.emergency_wait_time_days == 14 else '' }}>14 days</option>
+                                <option value="30" {{ 'selected' if current_user.emergency_wait_time_days == 30 else '' }}>30 days</option>
+                            </select>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Time period before emergency access is granted after a request.
+                            </p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" name="emergency_access_enabled" {{ 'checked' if current_user.emergency_access_enabled else '' }} class="rounded text-orange-500 focus:ring-orange-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Enable Emergency Access</span>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                            <i class="fas fa-save mr-2"></i> Save Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+                     
+            <!-- Hidden Vault Mode -->
+            <div x-data="{ open: false }" class="feature-card bg-white dark:bg-gray-700 rounded-lg shadow border border-gray-200 dark:border-gray-600 overflow-hidden">
+                <div class="p-5">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+                            <i class="fas fa-user-secret text-gray-500 mr-2"></i> Hidden Vault Mode
+                        </h3>
+                        <button @click="open = !open" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                            <i class="fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        </button>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mt-2">
+                        Set up a decoy vault with fake entries for enhanced security.
+                    </p>
+                </div>
+                
+                <div x-show="open" x-collapse class="bg-gray-50 dark:bg-gray-800 p-5 border-t border-gray-200 dark:border-gray-600">
+                    <form action="{{ url_for('premium.setup_hidden_vault') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="decoy_password">
+                                Decoy Access Password
+                            </label>
+                            <input type="password" id="decoy_password" name="decoy_password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-gray-500 focus:border-gray-500" placeholder="Enter a decoy password">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                When this password is used to log in, only non-sensitive entries will be shown.
+                            </p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" name="enable_hidden_vault" class="rounded text-gray-500 focus:ring-gray-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Enable Hidden Vault Mode</span>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            <i class="fas fa-save mr-2"></i> Save Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Geo-fenced Access -->
+            <div x-data="{ open: false }" class="feature-card bg-white dark:bg-gray-700 rounded-lg shadow border border-gray-200 dark:border-gray-600 overflow-hidden">
+                <div class="p-5">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+                            <i class="fas fa-map-marker-alt text-green-500 mr-2"></i> Geo-fenced Access
+                        </h3>
+                        <button @click="open = !open" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                            <i class="fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        </button>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mt-2">
+                        Restrict vault access to specific geographical regions or IP addresses.
+                    </p>
+                </div>
+                
+                <div x-show="open" x-collapse class="bg-gray-50 dark:bg-gray-800 p-5 border-t border-gray-200 dark:border-gray-600">
+                    <form action="{{ url_for('premium.setup_geo_access') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="allowed_ips">
+                                Allowed IP Addresses
+                            </label>
+                            <input type="text" id="allowed_ips" name="allowed_ips" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="e.g., 192.168.1.1, 10.0.0.1">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Leave empty to allow access from any IP. Separate multiple IPs with commas.
+                            </p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="allowed_regions">
+                                Allowed Regions
+                            </label>
+                            <select id="allowed_regions" name="allowed_regions" multiple class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-green-500 focus:border-green-500" size="4">
+                                <option value="US">United States</option>
+                                <option value="CA">Canada</option>
+                                <option value="UK">United Kingdom</option>
+                                <option value="EU">European Union</option>
+                                <option value="AU">Australia</option>
+                                <option value="JP">Japan</option>
+                            </select>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Hold Ctrl/Cmd to select multiple regions.
+                            </p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" name="geo_access_enabled" {{ 'checked' if current_user.geo_access_enabled else '' }} class="rounded text-green-500 focus:ring-green-500">
+                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Enable Geo-fenced Access</span>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            <i class="fas fa-save mr-2"></i> Save Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Auto Logout -->
+            <div x-data="{ open: false }" class="feature-card bg-white dark:bg-gray-700 rounded-lg shadow border border-gray-200 dark:border-gray-600 overflow-hidden">
+                <div class="p-5">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+                            <i class="fas fa-clock text-blue-500 mr-2"></i> Auto Logout Timer
+                        </h3>
+                        <button @click="open = !open" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                            <i class="fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                        </button>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mt-2">
+                        Set automatic logout after a period of inactivity.
+                    </p>
+                </div>
+                
+                <div x-show="open" x-collapse class="bg-gray-50 dark:bg-gray-800 p-5 border-t border-gray-200 dark:border-gray-600">
+                    <form action="{{ url_for('premium.setup_auto_logout') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="logout_minutes">
+                                Inactivity Timeout
+                            </label>
+                            <select id="logout_minutes" name="logout_minutes" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-700 dark:border-gray-600 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="5" {{ 'selected' if current_user.auto_logout_minutes == 5 else '' }}>5 minutes</option>
+                                <option value="10" {{ 'selected' if current_user.auto_logout_minutes == 10 else '' }}>10 minutes</option>
+                                <option value="15" {{ 'selected' if current_user.auto_logout_minutes == 15 else '' }}>15 minutes</option>
+                                <option value="30" {{ 'selected' if current_user.auto_logout_minutes == 30 else '' }}>30 minutes</option>
+                                <option value="60" {{ 'selected' if current_user.auto_logout_minutes == 60 else '' }}>1 hour</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="fas fa-save mr-2"></i> Save Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-indigo-50 dark:bg-indigo-900 rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Achievement Badges</h2>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <!-- Security Pro Badge -->
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm text-center">
+                    <div class="h-16 w-16 mx-auto mb-2 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                        <i class="fas fa-shield-alt text-2xl text-yellow-500"></i>
+                    </div>
+                    <h3 class="font-medium text-sm text-gray-800 dark:text-white">Security Pro</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Score 90+ on health check</p>
+                </div>
+                
+                <!-- Password Master Badge -->
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm text-center opacity-50">
+                    <div class="h-16 w-16 mx-auto mb-2 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                        <i class="fas fa-key text-2xl text-gray-400"></i>
+                    </div>
+                    <h3 class="font-medium text-sm text-gray-800 dark:text-white">Password Master</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Store 50+ passwords</p>
+                </div>
+                
+                <!-- No Repeats Badge -->
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm text-center">
+                    <div class="h-16 w-16 mx-auto mb-2 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                        <i class="fas fa-fingerprint text-2xl text-green-500"></i>
+                    </div>
+                    <h3 class="font-medium text-sm text-gray-800 dark:text-white">No Repeats</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">All passwords unique</p>
+                </div>
+                
+                <!-- More badges (locked/unavailable) -->
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm text-center opacity-50">
+                    <div class="h-16 w-16 mx-auto mb-2 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                        <i class="fas fa-lock text-2xl text-gray-400"></i>
+                    </div>
+                    <h3 class="font-medium text-sm text-gray-800 dark:text-white">Security Wizard</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Complete all security steps</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Premium Subscription Plans - SecureVault{% endblock %}
+
+{% block content %}
+<div class="fade-in max-w-4xl mx-auto">
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg px-8 pt-6 pb-8 mb-4 border border-gray-200 dark:border-gray-700">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white">
+                <i class="fas fa-crown text-yellow-500 mr-2"></i> 
+                Upgrade to Premium
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">
+                Unlock advanced security features and customize your password management experience
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+            <!-- Monthly Plan -->
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900 dark:to-indigo-800 rounded-xl p-6 shadow-lg transform transition-all duration-300 hover:scale-105">
+                <div class="text-center mb-6">
+                    <span class="inline-block bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase">Monthly</span>
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white mt-2">SecureVault Premium</h3>
+                    <div class="mt-4">
+                        <span class="text-4xl font-bold text-blue-600 dark:text-blue-400">${{ plans.monthly.price }}</span>
+                        <span class="text-gray-600 dark:text-gray-300">/month</span>
+                    </div>
+                </div>
+
+                <ul class="space-y-3 mb-6">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span class="text-gray-700 dark:text-gray-200">Password Health Score & Tips</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span class="text-gray-700 dark:text-gray-200">Data Breach Monitoring</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span class="text-gray-700 dark:text-gray-200">Custom Vault Themes</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span class="text-gray-700 dark:text-gray-200">Password History Tracking</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span class="text-gray-700 dark:text-gray-200">Enhanced Security Features</span>
+                    </li>
+                </ul>
+
+                <form method="POST" action="{{ url_for('subscription.create_checkout_session') }}" class="text-center">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="plan_id" value="monthly">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors">
+                        Subscribe Monthly
+                    </button>
+                </form>
+            </div>
+
+            <!-- Yearly Plan -->
+            <div class="bg-gradient-to-br from-indigo-50 to-purple-100 dark:from-indigo-900 dark:to-purple-800 rounded-xl p-6 shadow-lg transform transition-all duration-300 hover:scale-105 relative">
+                <div class="absolute -top-3 -right-3">
+                    <span class="inline-block bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md uppercase">Best Value</span>
+                </div>
+                
+                <div class="text-center mb-6">
+                    <span class="inline-block bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase">Yearly</span>
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white mt-2">SecureVault Premium</h3>
+                    <div class="mt-4">
+                        <span class="text-4xl font-bold text-purple-600 dark:text-purple-400">${{ plans.yearly.price }}</span>
+                        <span class="text-gray-600 dark:text-gray-300">/year</span>
+                    </div>
+                    <div class="text-green-600 dark:text-green-400 text-sm font-bold mt-1">Save 16% compared to monthly</div>
+                </div>
+
+                <ul class="space-y-3 mb-6">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span class="text-gray-700 dark:text-gray-200">All Monthly Features</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span class="text-gray-700 dark:text-gray-200">Priority Customer Support</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span class="text-gray-700 dark:text-gray-200">Early Access to New Features</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span class="text-gray-700 dark:text-gray-200">Exclusive Premium Themes</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                        <span class="text-gray-700 dark:text-gray-200">Extended Vault History (1 year)</span>
+                    </li>
+                </ul>
+
+                <form method="POST" action="{{ url_for('subscription.create_checkout_session') }}" class="text-center">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="plan_id" value="yearly">
+                    <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors">
+                        Subscribe Yearly
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mt-8">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Premium Features Include:</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 bg-blue-100 dark:bg-blue-800 rounded-lg p-2">
+                        <i class="fas fa-tachometer-alt text-blue-600 dark:text-blue-300 text-lg"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-md font-medium text-gray-800 dark:text-white">Password Health Score</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Visual scores and weekly tips to improve password strength and variety.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 bg-red-100 dark:bg-red-800 rounded-lg p-2">
+                        <i class="fas fa-shield-alt text-red-600 dark:text-red-300 text-lg"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-md font-medium text-gray-800 dark:text-white">Breach Monitoring</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Get alerts if your email or saved passwords appear in known data breaches.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 bg-purple-100 dark:bg-purple-800 rounded-lg p-2">
+                        <i class="fas fa-paint-brush text-purple-600 dark:text-purple-300 text-lg"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-md font-medium text-gray-800 dark:text-white">Custom Themes</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Unlock exclusive visual themes like Neon Dark, Cyberpunk, and more.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 bg-green-100 dark:bg-green-800 rounded-lg p-2">
+                        <i class="fas fa-history text-green-600 dark:text-green-300 text-lg"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-md font-medium text-gray-800 dark:text-white">Password History</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">View the complete change history of any password entry.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 bg-yellow-100 dark:bg-yellow-800 rounded-lg p-2">
+                        <i class="fas fa-user-secret text-yellow-600 dark:text-yellow-300 text-lg"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-md font-medium text-gray-800 dark:text-white">Hidden Vault Mode</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Create a decoy mode with fake entries for enhanced security.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 bg-indigo-100 dark:bg-indigo-800 rounded-lg p-2">
+                        <i class="fas fa-globe text-indigo-600 dark:text-indigo-300 text-lg"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-md font-medium text-gray-800 dark:text-white">Geo-fenced Access</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Allow vault access only from certain regions or registered devices.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-8 text-center">
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+                Cancel anytime. Subscriptions automatically renew until canceled. 
+                All payments are securely processed by Stripe.
+                <br>
+                Questions? <a href="#" class="text-blue-600 dark:text-blue-400 hover:underline">Contact our support team</a>.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

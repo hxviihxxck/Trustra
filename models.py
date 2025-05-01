@@ -19,6 +19,27 @@ class User(UserMixin, db.Model):
     passwords = db.relationship('PasswordEntry', backref='owner', lazy='dynamic', cascade="all, delete-orphan")
     date_joined = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Subscription-related fields
+    is_premium = db.Column(db.Boolean, default=False)
+    stripe_customer_id = db.Column(db.String(255), nullable=True)
+    subscription_id = db.Column(db.String(255), nullable=True)
+    subscription_status = db.Column(db.String(50), default='free')  # free, active, past_due, canceled
+    subscription_end_date = db.Column(db.DateTime, nullable=True)
+    selected_theme = db.Column(db.String(50), default='default')  # For premium theme features
+    last_password_check = db.Column(db.DateTime, nullable=True)  # For password health score
+    password_score = db.Column(db.Integer, default=0)  # Overall password health score
+    
+    # Emergency access fields
+    emergency_contact_email = db.Column(db.String(120), nullable=True)
+    emergency_access_enabled = db.Column(db.Boolean, default=False)
+    emergency_wait_time_days = db.Column(db.Integer, default=7)  # Days before emergency access granted
+    emergency_request_date = db.Column(db.DateTime, nullable=True)  # When emergency access was requested
+    
+    # Security settings
+    geo_access_enabled = db.Column(db.Boolean, default=False)
+    allowed_regions = db.Column(db.Text, nullable=True)  # JSON list of allowed regions/IPs
+    auto_logout_minutes = db.Column(db.Integer, default=15)  # Inactivity timeout
+    
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
         # Generate a unique encryption key for this user
@@ -34,6 +55,47 @@ class User(UserMixin, db.Model):
     def get_fernet(self):
         key = base64.urlsafe_b64decode(self.encryption_key.encode('utf-8'))
         return Fernet(key)
+        
+    @property
+    def has_premium_features(self):
+        """Check if the user has access to premium features"""
+        return self.is_premium and self.subscription_status == 'active'
+        
+    def update_password_score(self):
+        """Calculate password health score based on various factors"""
+        if not self.passwords.count():
+            self.password_score = 0
+            return
+            
+        score = 70  # Base score
+        passwords = self.passwords.all()
+        
+        # Check for password reuse
+        unique_passwords = set()
+        for entry in passwords:
+            unique_passwords.add(entry.get_password())
+        
+        if len(unique_passwords) < len(passwords):
+            score -= 10  # Penalty for reused passwords
+            
+        # Check for weak passwords
+        weak_count = 0
+        for entry in passwords:
+            password = entry.get_password()
+            if len(password) < 10:
+                weak_count += 1
+                
+        if weak_count > 0:
+            score -= min(10, weak_count * 2)  # Penalty for weak passwords
+            
+        # Calculate diversity score
+        categories = set(entry.category for entry in passwords if entry.category)
+        category_bonus = min(10, len(categories) * 2)
+        score += category_bonus
+        
+        # Cap score between 0-100
+        self.password_score = max(0, min(100, score))
+        self.last_password_check = datetime.utcnow()
 
 class PasswordEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -46,11 +108,113 @@ class PasswordEntry(db.Model):
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
     date_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    expiry_date = db.Column(db.DateTime, nullable=True)  # For password expiry alerts
+    breach_status = db.Column(db.Boolean, default=False)  # For breach monitoring
+    last_breach_check = db.Column(db.DateTime, nullable=True)  # When last checked for breaches
+    is_hidden = db.Column(db.Boolean, default=False)  # For hidden vault mode
+    strength_score = db.Column(db.Integer, default=0)  # Password strength score
+    
+    # Relationship to password history entries
+    history = db.relationship('PasswordHistory', backref='password_entry', lazy='dynamic', cascade="all, delete-orphan")
     
     def set_password(self, plaintext_password):
+        # Create history entry for premium users
+        if self.id and self.owner.has_premium_features:
+            old_password = None
+            try:
+                old_password = self.get_password()
+            except:
+                pass  # Handle case where decryption fails
+                
+            if old_password:
+                history_entry = PasswordHistory(
+                    password_id=self.id,
+                    old_value_encrypted=self.password_encrypted,
+                    changed_by=self.owner.username
+                )
+                db.session.add(history_entry)
+        
+        # Encrypt and store the new password
         fernet = self.owner.get_fernet()
         self.password_encrypted = fernet.encrypt(plaintext_password.encode('utf-8'))
+        
+        # Calculate password strength score
+        self.calculate_strength(plaintext_password)
     
     def get_password(self):
         fernet = self.owner.get_fernet()
         return fernet.decrypt(self.password_encrypted).decode('utf-8')
+        
+    def calculate_strength(self, password):
+        """Calculate password strength score (0-100)"""
+        score = 0
+        
+        # Length-based score
+        if len(password) >= 16:
+            score += 30
+        elif len(password) >= 12:
+            score += 25
+        elif len(password) >= 8:
+            score += 15
+        else:
+            score += 5
+            
+        # Character diversity
+        if any(c.islower() for c in password):
+            score += 10
+        if any(c.isupper() for c in password):
+            score += 10
+        if any(c.isdigit() for c in password):
+            score += 10
+        if any(not c.isalnum() for c in password):
+            score += 15
+            
+        # Additional bonus for length
+        score += min(25, len(password) - 8)
+        
+        # Cap at 100
+        self.strength_score = min(100, score)
+        
+    def check_for_breach(self):
+        """Check if this password has been in a data breach (premium feature)"""
+        # This would integrate with the haveibeenpwned API
+        # For now, we'll just mark it as checked
+        self.last_breach_check = datetime.utcnow()
+        
+        # In a real implementation, we would check the password hash against the API
+        # self.breach_status = True/False based on API response
+        return False
+
+
+class PasswordHistory(db.Model):
+    """Tracks password change history for premium users"""
+    id = db.Column(db.Integer, primary_key=True)
+    password_id = db.Column(db.Integer, db.ForeignKey('password_entry.id'), nullable=False)
+    old_value_encrypted = db.Column(db.LargeBinary, nullable=False)
+    date_changed = db.Column(db.DateTime, default=datetime.utcnow)
+    changed_by = db.Column(db.String(100), nullable=False)  # Username who made the change
+    
+    def get_old_password(self, user):
+        """Decrypt the old password value"""
+        fernet = user.get_fernet()
+        return fernet.decrypt(self.old_value_encrypted).decode('utf-8')
+
+
+class EmergencyAccessRequest(db.Model):
+    """Tracks emergency access requests and approvals"""
+    id = db.Column(db.Integer, primary_key=True)
+    requester_email = db.Column(db.String(120), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    requested_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)  # When access will be automatically granted
+    status = db.Column(db.String(20), default='pending')  # pending, approved, denied, expired
+    
+    user = db.relationship('User', backref='emergency_requests')
+    
+    @property
+    def is_approved(self):
+        return self.status == 'approved'
+        
+    @property
+    def is_expired(self):
+        return datetime.utcnow() > self.expires_at
