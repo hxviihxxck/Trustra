@@ -42,12 +42,115 @@
         .toast-notification {
             transition: all 0.3s ease;
         }
+        
+        /* Premium Themes */
+        .theme-cyberpunk {
+            --theme-primary: #ff00ff;
+            --theme-secondary: #00ffff;
+            --theme-accent: #ffff00;
+            --theme-background: #1a1a2e;
+            --theme-card-bg: #16213e;
+            --theme-text: #e94560;
+        }
+        .theme-cyberpunk .bg-primary-600 {
+            background-color: #ff00ff !important;
+        }
+        .theme-cyberpunk .text-primary-600, .theme-cyberpunk .text-primary-500 {
+            color: #ff00ff !important;
+        }
+        .theme-cyberpunk .hover\:bg-primary-700:hover {
+            background-color: #cc00cc !important;
+        }
+        .theme-cyberpunk .bg-white {
+            background-color: #16213e !important;
+        }
+        .theme-cyberpunk.bg-gray-50 {
+            background-color: #1a1a2e !important;
+            color: #e0e0e0 !important;
+        }
+        .theme-cyberpunk .text-gray-800 {
+            color: #e0e0e0 !important;
+        }
+        
+        .theme-neon {
+            --theme-primary: #39ff14;
+            --theme-secondary: #0ff0fc;
+            --theme-accent: #ff2a6d;
+            --theme-background: #11151c;
+            --theme-card-bg: #212121;
+            --theme-text: #e0e0e0;
+        }
+        .theme-neon .bg-primary-600 {
+            background-color: #39ff14 !important;
+        }
+        .theme-neon .text-primary-600, .theme-neon .text-primary-500 {
+            color: #39ff14 !important;
+        }
+        .theme-neon .hover\:bg-primary-700:hover {
+            background-color: #32d912 !important;
+        }
+        .theme-neon .bg-white {
+            background-color: #212121 !important;
+        }
+        .theme-neon.bg-gray-50 {
+            background-color: #11151c !important;
+            color: #e0e0e0 !important;
+        }
+        .theme-neon .text-gray-800 {
+            color: #e0e0e0 !important;
+        }
+        
+        .theme-solarized {
+            --theme-primary: #b58900;
+            --theme-secondary: #268bd2;
+            --theme-accent: #cb4b16;
+            --theme-background: #fdf6e3;
+            --theme-card-bg: #eee8d5;
+            --theme-text: #657b83;
+        }
+        .theme-solarized .bg-primary-600 {
+            background-color: #b58900 !important;
+        }
+        .theme-solarized .text-primary-600, .theme-solarized .text-primary-500 {
+            color: #b58900 !important;
+        }
+        .theme-solarized .hover\:bg-primary-700:hover {
+            background-color: #9a7600 !important;
+        }
+        .theme-solarized .bg-white {
+            background-color: #eee8d5 !important;
+        }
+        .theme-solarized.bg-gray-50 {
+            background-color: #fdf6e3 !important;
+            color: #657b83 !important;
+        }
+        .theme-solarized .text-gray-800 {
+            color: #657b83 !important;
+        }
+        
+        .dark.theme-solarized {
+            --theme-background: #002b36;
+            --theme-card-bg: #073642;
+            --theme-text: #839496;
+        }
+        .dark.theme-solarized.bg-gray-50 {
+            background-color: #002b36 !important;
+        }
+        .dark.theme-solarized .bg-white {
+            background-color: #073642 !important;
+        }
     </style>
     
     {% block extra_head %}{% endblock %}
 </head>
 
-<body class="bg-gray-50 dark:bg-gray-900 min-h-screen" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" 
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen 
+      {% if current_user.is_authenticated and current_user.has_premium_features() %}
+        {% if current_user.selected_theme == 'cyberpunk' %} theme-cyberpunk {% endif %}
+        {% if current_user.selected_theme == 'neon' %} theme-neon {% endif %}
+        {% if current_user.selected_theme == 'solarized' %} theme-solarized {% endif %}
+      {% endif %}"
+      x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" 
       x-init="$watch('darkMode', val => { localStorage.setItem('darkMode', val); document.documentElement.classList.toggle('dark', val) })"
       :class="{ 'dark': darkMode }">
     
