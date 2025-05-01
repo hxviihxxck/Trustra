@@ -11,18 +11,20 @@ from models import User
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
 # Define the plans - these should match your Stripe product/price IDs
+# For development/testing, we'll use Stripe test price IDs for a simple subscription
+# In production, you would replace these with your actual Stripe price IDs
 SUBSCRIPTION_PLANS = {
     'monthly': {
         'name': 'Monthly Premium',
         'description': 'Unlock all premium features with monthly billing',
-        'price_id': 'price_monthly',  # Replace with actual Stripe price ID
+        'price_id': 'price_1OvXyzXXXXXXXXXXXXXXXXXX',  # Placeholder - replace with a real Stripe price ID in production
         'price': 4.99,
         'interval': 'month'
     },
     'yearly': {
         'name': 'Yearly Premium',
         'description': 'Unlock all premium features with yearly billing (save 16%)',
-        'price_id': 'price_yearly',  # Replace with actual Stripe price ID
+        'price_id': 'price_1OvXzzXXXXXXXXXXXXXXXXXX',  # Placeholder - replace with a real Stripe price ID in production
         'price': 49.99,
         'interval': 'year'
     }
