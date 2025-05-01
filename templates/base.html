@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}Secure Password Manager{% endblock %}</title>
     
     <!-- Tailwind CSS via CDN -->
@@ -182,6 +183,11 @@
     
     <!-- Custom JavaScript -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
     {% block extra_scripts %}{% endblock %}
+    
+    <!-- Chat Widget -->
+    {% from 'chat/chat_widget_safe.html' import chat_widget %}
+    {{ chat_widget() }}
 </body>
 </html>

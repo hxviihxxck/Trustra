@@ -1,0 +1,96 @@
+{% macro chat_widget() %}
+{% if session %}
+<div id="chat-widget" x-data="{ isOpen: false, minimized: true, messages: [], currentMessage: '', userEmail: '{{ current_user.email if current_user and current_user.is_authenticated else '' }}', userName: '{{ current_user.username if current_user and current_user.is_authenticated else '' }}' }"
+     class="fixed bottom-4 right-4 z-50 flex flex-col"
+     x-init="$watch('isOpen', value => { 
+         if (value && messages.length === 0) {
+             messages.push({
+                 sender: 'system',
+                 content: 'Welcome to Trustra support chat! How can we help you today?',
+                 timestamp: new Date().toISOString()
+             });
+         }
+     })">
+    
+    <!-- Chat button -->
+    <button @click="isOpen = !isOpen; minimized = false" 
+            class="self-end bg-primary-600 hover:bg-primary-700 text-white rounded-full p-3 shadow-lg transition-all duration-200 transform hover:scale-105 focus:outline-none"
+            :class="{'rotate-45': isOpen && !minimized}">
+        <i class="fas" :class="isOpen && !minimized ? 'fa-times' : 'fa-comment'"></i>
+    </button>
+    
+    <!-- Chat window -->
+    <div x-show="isOpen" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 transform scale-90"
+         x-transition:enter-end="opacity-100 transform scale-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 transform scale-100"
+         x-transition:leave-end="opacity-0 transform scale-90"
+         class="bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden mt-2 w-80 md:w-96 flex flex-col border border-gray-200 dark:border-gray-700"
+         style="height: 400px; max-height: 70vh;">
+        
+        <!-- Chat header -->
+        <div class="bg-primary-600 dark:bg-primary-700 text-white p-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fas fa-headset mr-2"></i>
+                <span class="font-bold">Trustra Support</span>
+            </div>
+            <div class="flex space-x-2">
+                <button @click="minimized = true" class="text-white hover:text-gray-200 focus:outline-none">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button @click="isOpen = false" class="text-white hover:text-gray-200 focus:outline-none">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Minimized view -->
+        <div x-show="minimized" class="p-4 text-center">
+            <p class="text-gray-700 dark:text-gray-300">
+                <i class="fas fa-comment-dots text-primary-500 text-3xl mb-2"></i><br>
+                Chat is minimized. <br>
+                <button @click="minimized = false" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 underline focus:outline-none">
+                    Expand
+                </button> to continue.
+            </p>
+        </div>
+        
+        <!-- Chat messages -->
+        <div x-show="!minimized" class="flex-1 overflow-y-auto p-3 space-y-3" id="chat-messages">
+            <template x-for="(message, index) in messages" :key="index">
+                <div :class="{
+                    'flex flex-col': true,
+                    'items-start': message.sender !== 'user',
+                    'items-end': message.sender === 'user'
+                }">
+                    <div :class="{
+                        'px-4 py-2 rounded-lg max-w-3/4 break-words': true,
+                        'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200': message.sender !== 'user',
+                        'bg-primary-500 text-white': message.sender === 'user'
+                    }">
+                        <p x-text="message.content"></p>
+                    </div>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-text="formatTimestamp(message.timestamp)"></span>
+                </div>
+            </template>
+        </div>
+        
+        <!-- Chat input -->
+        <div x-show="!minimized" class="p-3 border-t border-gray-200 dark:border-gray-700">
+            <form @submit.prevent="sendMessage()" class="flex space-x-2">
+                <input type="text" x-model="currentMessage" @keydown.enter="sendMessage()"
+                       class="flex-1 border border-gray-300 dark:border-gray-600 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                       placeholder="Type your message...">
+                <button type="submit" 
+                        class="bg-primary-600 hover:bg-primary-700 text-white rounded-full p-2 focus:outline-none disabled:opacity-50"
+                        :disabled="!currentMessage.trim()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endmacro %}
