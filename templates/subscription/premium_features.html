@@ -171,12 +171,39 @@
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Last Scan</label>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-600 dark:text-gray-400">Today, 10:45 AM</span>
-                            <form action="{{ url_for('premium.check_breaches') }}" method="POST">
+                            <form action="{{ url_for('premium.check_breaches') }}" method="POST" id="breach-scan-form">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                <button type="button" onclick="startBreachScan()" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                                     Scan Now
                                 </button>
                             </form>
+                            
+                            <!-- Breach Scan Loading Overlay -->
+                            <div id="breach-scan-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+                                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 text-center shadow-xl">
+                                    <div class="mb-4">
+                                        <svg class="animate-spin h-10 w-10 text-red-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Scanning Your Passwords</h3>
+                                    <p class="text-gray-600 dark:text-gray-400 mb-2">We are checking your passwords against known data breaches.</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-500">This may take a few moments...</p>
+                                </div>
+                            </div>
+                            
+                            <script>
+                            function startBreachScan() {
+                                // Show the loading overlay
+                                document.getElementById('breach-scan-overlay').classList.remove('hidden');
+                                
+                                // Submit the form after a short delay to ensure the overlay is visible
+                                setTimeout(() => {
+                                    document.getElementById('breach-scan-form').submit();
+                                }, 100);
+                            }
+                            </script>
                         </div>
                     </div>
                 </div>
