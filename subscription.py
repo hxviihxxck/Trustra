@@ -6,25 +6,24 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_required, current_user
 from app import db
 from models import User
+from forms import SubscriptionForm
 
 # Set up Stripe API key from environment variables
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
 # Define the plans - these should match your Stripe product/price IDs
-# For development/testing, we'll use Stripe test price IDs for a simple subscription
-# In production, you would replace these with your actual Stripe price IDs
+# For development/testing, we'll use the test mode functionality instead of specific price IDs
+# This approach uses the price parameter directly instead of a price ID
 SUBSCRIPTION_PLANS = {
     'monthly': {
         'name': 'Monthly Premium',
         'description': 'Unlock all premium features with monthly billing',
-        'price_id': 'price_1OvXyzXXXXXXXXXXXXXXXXXX',  # Placeholder - replace with a real Stripe price ID in production
         'price': 4.99,
         'interval': 'month'
     },
     'yearly': {
         'name': 'Yearly Premium',
         'description': 'Unlock all premium features with yearly billing (save 16%)',
-        'price_id': 'price_1OvXzzXXXXXXXXXXXXXXXXXX',  # Placeholder - replace with a real Stripe price ID in production
         'price': 49.99,
         'interval': 'year'
     }
@@ -37,13 +36,24 @@ subscription_bp = Blueprint('subscription', __name__)
 @login_required
 def plans():
     """Display available subscription plans"""
-    return render_template('subscription/plans.html', plans=SUBSCRIPTION_PLANS)
+    monthly_form = SubscriptionForm(plan_id='monthly')
+    yearly_form = SubscriptionForm(plan_id='yearly')
+    return render_template('subscription/plans.html', 
+                          plans=SUBSCRIPTION_PLANS,
+                          monthly_form=monthly_form,
+                          yearly_form=yearly_form)
 
 @subscription_bp.route('/subscription/create-checkout-session', methods=['POST'])
 @login_required
 def create_checkout_session():
     """Create a Stripe checkout session for subscription"""
-    plan_id = request.form.get('plan_id')
+    form = SubscriptionForm()
+    
+    if not form.validate_on_submit():
+        flash('Invalid form submission. Please try again.', 'danger')
+        return redirect(url_for('subscription.plans'))
+    
+    plan_id = form.plan_id.data
     
     if plan_id not in SUBSCRIPTION_PLANS:
         flash('Invalid subscription plan selected.', 'danger')
@@ -73,7 +83,17 @@ def create_checkout_session():
             payment_method_types=['card'],
             line_items=[
                 {
-                    'price': plan['price_id'],
+                    'price_data': {
+                        'currency': 'usd',
+                        'product_data': {
+                            'name': f'SecureVault Premium - {plan["name"]}',
+                            'description': plan['description'],
+                        },
+                        'unit_amount': int(plan['price'] * 100),  # Convert dollars to cents
+                        'recurring': {
+                            'interval': plan['interval'],
+                        }
+                    },
                     'quantity': 1,
                 },
             ],

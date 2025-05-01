@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField, SelectField, BooleanField, URLField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, SelectField, BooleanField, URLField, HiddenField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, URL, Optional
 
 class RegistrationForm(FlaskForm):
@@ -37,3 +37,8 @@ class PasswordEntryForm(FlaskForm):
 class SearchForm(FlaskForm):
     query = StringField('Search', validators=[Optional()])
     submit = SubmitField('Search')
+    
+class SubscriptionForm(FlaskForm):
+    """Form for subscription checkout"""
+    plan_id = HiddenField('Plan ID', validators=[DataRequired()])
+    submit = SubmitField('Subscribe')
