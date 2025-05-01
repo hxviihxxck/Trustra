@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
-from models import User, PasswordEntry, EmergencyAccessRequest
+from models import User, PasswordEntry, EmergencyAccessRequest, PasswordHistory
 
 # Blueprint for premium features
 premium_bp = Blueprint('premium', __name__)

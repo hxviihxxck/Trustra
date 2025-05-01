@@ -5,6 +5,12 @@ from app import app, db
 from models import User, PasswordEntry
 from forms import RegistrationForm, LoginForm, PasswordEntryForm, SearchForm
 from werkzeug.exceptions import BadRequest
+from subscription import subscription_bp
+from premium import premium_bp
+
+# Register blueprints
+app.register_blueprint(subscription_bp)
+app.register_blueprint(premium_bp)
 
 # Index route
 @app.route('/')
