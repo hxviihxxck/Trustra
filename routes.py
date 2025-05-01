@@ -241,3 +241,54 @@ def internal_error(error):
 @app.errorhandler(BadRequest)
 def handle_bad_request(error):
     return render_template('error.html', error_code=400, error_message="Bad request"), 400
+
+# Demo route for upgrading to premium (for demonstration purposes only)
+@app.route('/demo-upgrade-premium', methods=['GET', 'POST'])
+@login_required
+def demo_upgrade_premium():
+    """Upgrade current user to premium for demonstration purposes"""
+    from datetime import datetime, timedelta
+    
+    try:
+        # Set premium status
+        current_user.is_premium = True
+        current_user.subscription_status = 'active'
+        current_user.subscription_end_date = datetime.utcnow() + timedelta(days=365)  # Set to expire in 1 year
+        
+        # Set a placeholder subscription ID
+        if not current_user.subscription_id:
+            current_user.subscription_id = f"demo_sub_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+        
+        db.session.commit()
+        
+        flash('Your account has been upgraded to premium for demonstration purposes!', 'success')
+        return redirect(url_for('subscription.premium_features'))
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Demo premium upgrade error: {str(e)}")
+        flash('An error occurred while upgrading your account. Please try again.', 'danger')
+        return redirect(url_for('dashboard'))
+
+# Admin dashboard (protected route)
+@app.route('/admin-dashboard')
+@login_required
+def admin_dashboard():
+    """Admin dashboard for site administrators"""
+    if not getattr(current_user, 'is_admin', False):
+        flash('You do not have permission to access the admin dashboard.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    # Get user statistics
+    user_count = User.query.count()
+    premium_user_count = User.query.filter_by(is_premium=True).count()
+    total_passwords = PasswordEntry.query.count()
+    
+    # Get recent users
+    recent_users = User.query.order_by(User.date_joined.desc()).limit(10).all()
+    
+    return render_template('admin/dashboard.html', 
+                         title='Admin Dashboard',
+                         user_count=user_count,
+                         premium_user_count=premium_user_count,
+                         total_passwords=total_passwords,
+                         recent_users=recent_users)
