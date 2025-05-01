@@ -51,11 +51,9 @@
                 </ul>
 
                 <form method="POST" action="{{ url_for('subscription.create_checkout_session') }}" class="text-center">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="plan_id" value="monthly">
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors">
-                        Subscribe Monthly
-                    </button>
+                    {{ monthly_form.hidden_tag() }}
+                    {{ monthly_form.plan_id }}
+                    {{ monthly_form.submit(class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors", value="Subscribe Monthly") }}
                 </form>
             </div>
 
@@ -99,11 +97,9 @@
                 </ul>
 
                 <form method="POST" action="{{ url_for('subscription.create_checkout_session') }}" class="text-center">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="plan_id" value="yearly">
-                    <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors">
-                        Subscribe Yearly
-                    </button>
+                    {{ yearly_form.hidden_tag() }}
+                    {{ yearly_form.plan_id }}
+                    {{ yearly_form.submit(class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors", value="Subscribe Yearly") }}
                 </form>
             </div>
         </div>
