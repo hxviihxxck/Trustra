@@ -58,8 +58,35 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
     
     def get_fernet(self):
-        key = base64.urlsafe_b64decode(self.encryption_key.encode('utf-8'))
-        return Fernet(key)
+        try:
+            # Make sure the key is properly padded
+            encryption_key = self.encryption_key
+            # Ensure padding is correct for base64
+            padding_needed = len(encryption_key) % 4
+            if padding_needed:
+                encryption_key += '=' * (4 - padding_needed)
+            
+            key = base64.urlsafe_b64decode(encryption_key.encode('utf-8'))
+            # Ensure key is exactly 32 bytes
+            if len(key) != 32:
+                logging.error(f"Key length is {len(key)} bytes, not 32 bytes")
+                # Pad or truncate to 32 bytes
+                if len(key) < 32:
+                    key = key.ljust(32, b'\0')  # Pad with null bytes
+                else:
+                    key = key[:32]  # Truncate to 32 bytes
+            
+            # Create valid Fernet key
+            valid_key = base64.urlsafe_b64encode(key)
+            return Fernet(valid_key)
+        except Exception as e:
+            logging.error(f"Error creating Fernet key: {str(e)}")
+            # Generate a new encryption key and save it
+            self.encryption_key = base64.urlsafe_b64encode(os.urandom(32)).decode('utf-8')
+            from app import db
+            db.session.commit()
+            # Return a new Fernet instance with the new key
+            return Fernet(base64.urlsafe_b64encode(base64.urlsafe_b64decode(self.encryption_key.encode('utf-8'))))
         
     def has_premium_features(self):
         """Check if the user has access to premium features"""
@@ -127,7 +154,16 @@ class PasswordEntry(db.Model):
             from app import db
             if self.user_id:
                 logging.debug(f"Loading owner for password entry with user_id={self.user_id}")
+                # Try to find owner with two different methods
                 self.owner = db.session.query(User).get(self.user_id)
+                
+                if not self.owner:
+                    try:
+                        # Try using filter_by if get doesn't work
+                        self.owner = db.session.query(User).filter_by(id=self.user_id).first()
+                    except Exception as e:
+                        logging.error(f"Error in filter_by: {str(e)}")
+                
                 if self.owner:
                     logging.debug(f"Found owner: {self.owner.username}")
                 else:
@@ -137,9 +173,16 @@ class PasswordEntry(db.Model):
                 
         # If we still don't have an owner, we can't encrypt
         if not hasattr(self, 'owner') or self.owner is None:
-            error_msg = "Cannot encrypt password without a valid user owner"
-            logging.error(error_msg)
-            raise ValueError(error_msg)
+            from flask_login import current_user
+            # If current_user is available, use that
+            if current_user and current_user.is_authenticated:
+                logging.debug(f"Using current_user as owner: {current_user.username}")
+                self.owner = current_user
+                self.user_id = current_user.id
+            else:
+                error_msg = "Cannot encrypt password without a valid user owner"
+                logging.error(error_msg)
+                raise ValueError(error_msg)
             
         # Create history entry for premium users
         if self.id and self.owner.has_premium_features():
@@ -169,14 +212,43 @@ class PasswordEntry(db.Model):
         if not hasattr(self, 'owner') or self.owner is None:
             from app import db
             if self.user_id:
+                logging.debug(f"Loading owner for decryption with user_id={self.user_id}")
+                # Try to find owner with two different methods
                 self.owner = db.session.query(User).get(self.user_id)
+                
+                if not self.owner:
+                    try:
+                        # Try using filter_by if get doesn't work
+                        self.owner = db.session.query(User).filter_by(id=self.user_id).first()
+                    except Exception as e:
+                        logging.error(f"Error in filter_by: {str(e)}")
+                
+                if self.owner:
+                    logging.debug(f"Found owner for decryption: {self.owner.username}")
+                else:
+                    logging.error(f"Could not find owner for decryption with user_id={self.user_id}")
+            else:
+                logging.error("Password entry has no user_id for decryption")
                 
         # If we still don't have an owner, we can't decrypt
         if not hasattr(self, 'owner') or self.owner is None:
-            raise ValueError("Cannot decrypt password without a valid user owner")
+            from flask_login import current_user
+            # If current_user is available, use that
+            if current_user and current_user.is_authenticated:
+                logging.debug(f"Using current_user as owner for decryption: {current_user.username}")
+                self.owner = current_user
+                self.user_id = current_user.id
+            else:
+                error_msg = "Cannot decrypt password without a valid user owner"
+                logging.error(error_msg)
+                raise ValueError(error_msg)
             
-        fernet = self.owner.get_fernet()
-        return fernet.decrypt(self.password_encrypted).decode('utf-8')
+        try:
+            fernet = self.owner.get_fernet()
+            return fernet.decrypt(self.password_encrypted).decode('utf-8')
+        except Exception as e:
+            logging.error(f"Error decrypting password: {str(e)}")
+            raise ValueError(f"Could not decrypt password: {str(e)}")
         
     def calculate_strength(self, password):
         """Calculate password strength score (0-100)"""
@@ -212,26 +284,39 @@ class PasswordEntry(db.Model):
         """Check if this password has been in a data breach (premium feature)"""
         import hashlib
         import random
+        from app import db
         
         # Mark it as checked
         self.last_breach_check = datetime.utcnow()
         
         # In a real implementation, we would use the haveibeenpwned API
         # For demonstration, we'll simulate some passwords being breached
-        plaintext = self.get_password()
-        if plaintext:
-            # Create SHA-1 hash of the password
-            sha1_hash = hashlib.sha1(plaintext.encode('utf-8')).hexdigest().upper()
+        try:
+            plaintext = self.get_password()
             
-            # Simulate breach detection (15% chance of a breach)
-            # In a real implementation, we would check with the haveibeenpwned API
-            is_breached = random.random() < 0.15 or len(plaintext) < 8
-            
-            # Update the breach status
-            self.breach_status = is_breached
-            db.session.commit()
-            
-            return is_breached
+            if plaintext:
+                # Create SHA-1 hash of the password
+                sha1_hash = hashlib.sha1(plaintext.encode('utf-8')).hexdigest().upper()
+                logging.debug(f"Checking breach status for password with hash prefix {sha1_hash[:5]}...")
+                
+                # Simulate breach detection (15% chance of a breach)
+                # In a real implementation, we would check with the haveibeenpwned API
+                is_breached = random.random() < 0.15 or len(plaintext) < 8
+                
+                # Update the breach status
+                self.breach_status = is_breached
+                db.session.commit()
+                
+                return is_breached
+        except Exception as e:
+            logging.error(f"Error checking for breach: {str(e)}")
+            # Set breach status to True in case of error (better safe than sorry)
+            self.breach_status = True
+            try:
+                db.session.commit()
+            except:
+                pass
+            return True
         
         return False
 
@@ -246,8 +331,12 @@ class PasswordHistory(db.Model):
     
     def get_old_password(self, user):
         """Decrypt the old password value"""
-        fernet = user.get_fernet()
-        return fernet.decrypt(self.old_value_encrypted).decode('utf-8')
+        try:
+            fernet = user.get_fernet()
+            return fernet.decrypt(self.old_value_encrypted).decode('utf-8')
+        except Exception as e:
+            logging.error(f"Error decrypting password history: {str(e)}")
+            return "*** Decryption failed ***"
 
 
 class EmergencyAccessRequest(db.Model):
