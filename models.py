@@ -1,5 +1,6 @@
 import base64
 import os
+import logging
 from datetime import datetime
 from flask_login import UserMixin
 from cryptography.fernet import Fernet
@@ -121,6 +122,25 @@ class PasswordEntry(db.Model):
     history = db.relationship('PasswordHistory', backref='password_entry', lazy='dynamic', cascade="all, delete-orphan")
     
     def set_password(self, plaintext_password):
+        # Make sure owner is loaded
+        if not hasattr(self, 'owner') or self.owner is None:
+            from app import db
+            if self.user_id:
+                logging.debug(f"Loading owner for password entry with user_id={self.user_id}")
+                self.owner = db.session.query(User).get(self.user_id)
+                if self.owner:
+                    logging.debug(f"Found owner: {self.owner.username}")
+                else:
+                    logging.error(f"Could not find owner with user_id={self.user_id}")
+            else:
+                logging.error("Password entry has no user_id")
+                
+        # If we still don't have an owner, we can't encrypt
+        if not hasattr(self, 'owner') or self.owner is None:
+            error_msg = "Cannot encrypt password without a valid user owner"
+            logging.error(error_msg)
+            raise ValueError(error_msg)
+            
         # Create history entry for premium users
         if self.id and self.owner.has_premium_features():
             old_password = None
@@ -145,6 +165,16 @@ class PasswordEntry(db.Model):
         self.calculate_strength(plaintext_password)
     
     def get_password(self):
+        # Make sure owner is loaded
+        if not hasattr(self, 'owner') or self.owner is None:
+            from app import db
+            if self.user_id:
+                self.owner = db.session.query(User).get(self.user_id)
+                
+        # If we still don't have an owner, we can't decrypt
+        if not hasattr(self, 'owner') or self.owner is None:
+            raise ValueError("Cannot decrypt password without a valid user owner")
+            
         fernet = self.owner.get_fernet()
         return fernet.decrypt(self.password_encrypted).decode('utf-8')
         
