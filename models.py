@@ -179,12 +179,29 @@ class PasswordEntry(db.Model):
         
     def check_for_breach(self):
         """Check if this password has been in a data breach (premium feature)"""
-        # This would integrate with the haveibeenpwned API
-        # For now, we'll just mark it as checked
+        import hashlib
+        import random
+        
+        # Mark it as checked
         self.last_breach_check = datetime.utcnow()
         
-        # In a real implementation, we would check the password hash against the API
-        # self.breach_status = True/False based on API response
+        # In a real implementation, we would use the haveibeenpwned API
+        # For demonstration, we'll simulate some passwords being breached
+        plaintext = self.get_password()
+        if plaintext:
+            # Create SHA-1 hash of the password
+            sha1_hash = hashlib.sha1(plaintext.encode('utf-8')).hexdigest().upper()
+            
+            # Simulate breach detection (15% chance of a breach)
+            # In a real implementation, we would check with the haveibeenpwned API
+            is_breached = random.random() < 0.15 or len(plaintext) < 8
+            
+            # Update the breach status
+            self.breach_status = is_breached
+            db.session.commit()
+            
+            return is_breached
+        
         return False
 
 

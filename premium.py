@@ -128,10 +128,38 @@ def setup_hidden_vault():
             flash('You must set a decoy password to enable hidden vault mode.', 'warning')
             return redirect(url_for('subscription.premium_features'))
         
-        # In a real implementation, we would securely store the decoy password
-        # For demonstration purposes, we'll just show a success message
+        # Get all passwords for the user
+        passwords = PasswordEntry.query.filter_by(user_id=current_user.id).all()
         
-        flash('Hidden vault mode settings have been updated.', 'success')
+        # If enabling hidden vault
+        if enabled:
+            # Store the decoy password securely (hashed)
+            from werkzeug.security import generate_password_hash
+            hashed_decoy = generate_password_hash(decoy_password)
+            current_user.decoy_password_hash = hashed_decoy
+            
+            # Mark some passwords as hidden (about 40% of them)
+            import random
+            hidden_count = max(1, int(len(passwords) * 0.4))
+            passwords_to_hide = random.sample(passwords, min(hidden_count, len(passwords)))
+            
+            for password in passwords_to_hide:
+                password.is_hidden = True
+                
+            # Commit changes
+            db.session.commit()
+            flash(f'Hidden vault mode enabled. {len(passwords_to_hide)} passwords are now hidden in normal mode.', 'success')
+        else:
+            # Disable hidden vault
+            current_user.decoy_password_hash = None
+            
+            # Unhide all passwords
+            for password in passwords:
+                password.is_hidden = False
+                
+            # Commit changes
+            db.session.commit()
+            flash('Hidden vault mode has been disabled.', 'success')
     except Exception as e:
         logging.error(f"Error setting up hidden vault: {str(e)}")
         flash('An error occurred while updating your hidden vault settings.', 'danger')
