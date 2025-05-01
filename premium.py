@@ -13,7 +13,7 @@ premium_bp = Blueprint('premium', __name__)
 @login_required
 def update_password_score():
     """Update the user's password health score"""
-    if not current_user.has_premium_features:
+    if not current_user.has_premium_features():
         flash('This feature is only available to premium subscribers.', 'warning')
         return redirect(url_for('dashboard'))
     
@@ -33,7 +33,7 @@ def update_password_score():
 @login_required
 def check_breaches():
     """Check user's passwords for breaches"""
-    if not current_user.has_premium_features:
+    if not current_user.has_premium_features():
         flash('This feature is only available to premium subscribers.', 'warning')
         return redirect(url_for('dashboard'))
     
@@ -62,7 +62,7 @@ def check_breaches():
 @login_required
 def set_theme():
     """Set the user's theme preference"""
-    if not current_user.has_premium_features:
+    if not current_user.has_premium_features():
         flash('Custom themes are only available to premium subscribers.', 'warning')
         return redirect(url_for('dashboard'))
     
@@ -87,7 +87,7 @@ def set_theme():
 @login_required
 def setup_emergency_access():
     """Set up emergency access settings"""
-    if not current_user.has_premium_features:
+    if not current_user.has_premium_features():
         flash('Emergency access is only available to premium subscribers.', 'warning')
         return redirect(url_for('dashboard'))
     
@@ -116,7 +116,7 @@ def setup_emergency_access():
 @login_required
 def setup_hidden_vault():
     """Set up hidden vault mode"""
-    if not current_user.has_premium_features:
+    if not current_user.has_premium_features():
         flash('Hidden vault mode is only available to premium subscribers.', 'warning')
         return redirect(url_for('dashboard'))
     
@@ -142,7 +142,7 @@ def setup_hidden_vault():
 @login_required
 def setup_geo_access():
     """Set up geo-fenced access"""
-    if not current_user.has_premium_features:
+    if not current_user.has_premium_features():
         flash('Geo-fenced access is only available to premium subscribers.', 'warning')
         return redirect(url_for('dashboard'))
     
@@ -176,7 +176,7 @@ def setup_geo_access():
 @login_required
 def setup_auto_logout():
     """Set up automatic logout timer"""
-    if not current_user.has_premium_features:
+    if not current_user.has_premium_features():
         flash('Custom auto-logout timer is only available to premium subscribers.', 'warning')
         return redirect(url_for('dashboard'))
     
@@ -203,7 +203,7 @@ def setup_auto_logout():
 @login_required
 def password_history(password_id):
     """View password entry history"""
-    if not current_user.has_premium_features:
+    if not current_user.has_premium_features():
         flash('Password history is only available to premium subscribers.', 'warning')
         return redirect(url_for('dashboard'))
     

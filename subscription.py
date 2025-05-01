@@ -189,7 +189,7 @@ def portal_return():
 @login_required
 def premium_features():
     """Display and configure premium features"""
-    if not current_user.has_premium_features:
+    if not current_user.has_premium_features():
         flash('This page is only accessible to premium subscribers.', 'warning')
         return redirect(url_for('subscription.plans'))
     

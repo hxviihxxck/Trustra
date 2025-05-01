@@ -121,7 +121,7 @@ class PasswordEntry(db.Model):
     
     def set_password(self, plaintext_password):
         # Create history entry for premium users
-        if self.id and self.owner.has_premium_features:
+        if self.id and self.owner.has_premium_features():
             old_password = None
             try:
                 old_password = self.get_password()
