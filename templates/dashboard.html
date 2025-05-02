@@ -178,7 +178,7 @@
                                 <span class="text-sm font-medium text-gray-600 dark:text-gray-400 w-24">Password:</span>
                                 <div class="relative flex-grow group">
                                     <span x-show="!showPassword" class="text-sm text-gray-800 dark:text-gray-200">••••••••••••</span>
-                                    <span x-show="showPassword" x-init="loadPassword({{ password.id }})" x-text="password" class="text-sm text-gray-800 dark:text-gray-200 mr-2"></span>
+                                    <span x-show="showPassword" x-init="$data.password = loadPassword({{ password.id }})" x-text="password || '••••••••••••'" class="text-sm text-gray-800 dark:text-gray-200 mr-2"></span>
                                     <div class="absolute right-0 top-0 flex opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button @click="showPassword = !showPassword" class="text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 mr-2">
                                             <i x-show="!showPassword" class="fas fa-eye"></i>
@@ -308,9 +308,13 @@
                     if (data.password) {
                         passwordCache[passwordId] = data.password;
                         // Update Alpine.js data
-                        let element = document.querySelector(`[x-init="loadPassword(${passwordId})"]`);
-                        if (element) {
+                        let element = document.querySelector(`[x-init="$data.password = loadPassword(${passwordId})"]`);
+                        if (element && element.__x && element.__x.$data) {
+                            // Safely update Alpine.js data if it exists
                             element.__x.$data.password = data.password;
+                        } else {
+                            console.log('Alpine.js data not yet available, caching password only');
+                            // We'll rely on the cache for showing the password
                         }
                     } else {
                         console.error('No password data returned');
@@ -346,8 +350,15 @@
                 })
                 .then(data => {
                     if (data.password) {
+                        // Store in cache and copy to clipboard
                         passwordCache[passwordId] = data.password;
                         copyToClipboard(data.password);
+                        
+                        // Also update Alpine.js data if applicable
+                        let element = document.querySelector(`[x-init="$data.password = loadPassword(${passwordId})"]`);
+                        if (element && element.__x && element.__x.$data) {
+                            element.__x.$data.password = data.password;
+                        }
                     } else {
                         console.error('No password data returned');
                         throw new Error('No password data returned');
