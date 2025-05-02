@@ -111,9 +111,23 @@
 <div class="mt-12 text-center">
     <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-4">Ready to secure your passwords?</h2>
     <p class="text-lg text-gray-600 dark:text-gray-300 mb-6">Sign up today and take control of your digital security.</p>
-    <a href="{{ url_for('register') }}" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition">
+    <a href="{{ url_for('register') }}" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition mb-8">
         Create Your Secure Vault
         <i class="fas fa-lock ml-2"></i>
     </a>
+    
+    <div class="mt-10 flex justify-center">
+        <!-- Product Hunt Badge - Changes based on theme -->
+        <a href="https://www.producthunt.com/posts/trustra?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-trustra" target="_blank">
+            <img class="dark:hidden block" 
+                 src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=960135&theme=light&t=1746180736360" 
+                 alt="Trustra - Secure&#0032;password&#0032;manager | Product Hunt" 
+                 style="width: 250px; height: 54px;" width="250" height="54" />
+            <img class="hidden dark:block" 
+                 src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=960135&theme=dark&t=1746180736360" 
+                 alt="Trustra - Secure&#0032;password&#0032;manager | Product Hunt" 
+                 style="width: 250px; height: 54px;" width="250" height="54" />
+        </a>
+    </div>
 </div>
 {% endblock %}
