@@ -337,7 +337,9 @@ def view_emergency_requests():
             status='pending'
         ).all()
         
-        return render_template('premium/emergency_requests.html', requests=requests)
+        return render_template('premium/emergency_requests.html', 
+                              requests=requests,
+                              now=datetime.utcnow())
     except Exception as e:
         logging.error(f"Error retrieving emergency requests: {str(e)}")
         flash('An error occurred while retrieving emergency access requests.', 'danger')

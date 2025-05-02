@@ -5,17 +5,17 @@
 {% block content %}
 <div class="fade-in max-w-4xl mx-auto">
     <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg px-8 pt-6 pb-8 mb-4 border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex justify-between items-center mb-6">
             <div>
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
-                    <i class="fas fa-ambulance text-orange-500 mr-2"></i>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">
+                    <i class="fas fa-ambulance text-red-500 mr-2"></i>
                     Emergency Access Requests
                 </h1>
-                <p class="text-gray-600 dark:text-gray-400 mt-2">
-                    Manage requests for emergency access to your vault
+                <p class="text-gray-600 dark:text-gray-400 mt-1">
+                    Manage pending requests for emergency access to your vault
                 </p>
             </div>
-            <a href="{{ url_for('subscription.premium_features') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            <a href="{{ url_for('subscription.premium_features') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 <i class="fas fa-arrow-left mr-2"></i>
                 Back to Premium Features
             </a>
@@ -24,97 +24,56 @@
         {% if requests %}
             <div class="space-y-6">
                 {% for request in requests %}
-                    <div class="bg-orange-50 dark:bg-orange-900/30 rounded-lg p-6 border border-orange-200 dark:border-orange-800">
-                        <div class="flex flex-col md:flex-row md:items-start justify-between">
-                            <div class="mb-4 md:mb-0">
-                                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
-                                    Emergency Access Request
-                                </h3>
-                                <div class="mt-2 space-y-2">
-                                    <div class="flex items-start">
-                                        <div class="flex-shrink-0 h-5 w-5 text-gray-400">
-                                            <i class="fas fa-envelope"></i>
-                                        </div>
-                                        <div class="ml-3">
-                                            <p class="text-sm text-gray-700 dark:text-gray-300">
-                                                <span class="font-medium">Requestor:</span> {{ request.requester_email }}
-                                            </p>
-                                        </div>
+                    <div class="bg-red-50 dark:bg-red-900 rounded-lg overflow-hidden shadow border border-red-200 dark:border-red-700">
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="sm:flex sm:items-start sm:justify-between">
+                                <div>
+                                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                                        Emergency Access Request from {{ request.requester_email }}
+                                    </h3>
+                                    <div class="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-300">
+                                        <p>This person is requesting emergency access to your vault.</p>
+                                        <p class="mt-1">
+                                            <span class="font-semibold">Requested:</span> {{ request.requested_at.strftime('%Y-%m-%d %H:%M') }}
+                                        </p>
+                                        <p class="mt-1">
+                                            <span class="font-semibold">Auto-approved after:</span> {{ request.expires_at.strftime('%Y-%m-%d %H:%M') }}
+                                            ({{ (request.expires_at - now).days }} days remaining)
+                                        </p>
                                     </div>
-                                    <div class="flex items-start">
-                                        <div class="flex-shrink-0 h-5 w-5 text-gray-400">
-                                            <i class="fas fa-calendar"></i>
-                                        </div>
-                                        <div class="ml-3">
-                                            <p class="text-sm text-gray-700 dark:text-gray-300">
-                                                <span class="font-medium">Requested:</span> {{ request.requested_at.strftime('%Y-%m-%d %H:%M') }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-start">
-                                        <div class="flex-shrink-0 h-5 w-5 text-gray-400">
-                                            <i class="fas fa-hourglass-half"></i>
-                                        </div>
-                                        <div class="ml-3">
-                                            <p class="text-sm text-gray-700 dark:text-gray-300">
-                                                <span class="font-medium">Auto-Approval:</span> {{ request.expires_at.strftime('%Y-%m-%d %H:%M') }}
-                                            </p>
-                                        </div>
+                                </div>
+                                <div class="mt-5 sm:mt-0 sm:ml-6 sm:flex sm:flex-shrink-0 sm:items-center">
+                                    <div class="flex space-x-3">
+                                        <form action="{{ url_for('premium.handle_emergency_request', request_id=request.id, action='approve') }}" method="POST">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                                <i class="fas fa-check mr-2"></i> Approve
+                                            </button>
+                                        </form>
+                                        <form action="{{ url_for('premium.handle_emergency_request', request_id=request.id, action='deny') }}" method="POST">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                                <i class="fas fa-times mr-2"></i> Deny
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div class="flex flex-col space-y-2">
-                                <form action="{{ url_for('premium.handle_emergency_request', request_id=request.id, action='approve') }}" method="POST">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                        <i class="fas fa-check mr-2"></i> Approve
-                                    </button>
-                                </form>
-                                
-                                <form action="{{ url_for('premium.handle_emergency_request', request_id=request.id, action='deny') }}" method="POST">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                                        <i class="fas fa-times mr-2"></i> Deny
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-4 bg-orange-100 dark:bg-orange-800/50 p-3 rounded-md">
-                            <p class="text-sm text-orange-800 dark:text-orange-200">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>
-                                Warning: Approving this request will grant full access to your password vault. 
-                                If you did not expect this request, you should deny it immediately and change your master password.
-                            </p>
                         </div>
                     </div>
                 {% endfor %}
             </div>
         {% else %}
-            <div class="text-center py-12">
-                <div class="mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-green-100 dark:bg-green-900 mb-4">
-                    <i class="fas fa-check text-green-500 dark:text-green-400 text-2xl"></i>
+            <div class="text-center py-10">
+                <div class="mx-auto w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
+                    <i class="fas fa-check-circle text-green-500 text-3xl"></i>
                 </div>
                 <h3 class="text-lg font-medium text-gray-900 dark:text-white">No pending requests</h3>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     You don't have any pending emergency access requests at this time.
                 </p>
             </div>
         {% endif %}
-        
-        <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">About Emergency Access</h2>
-            <p class="text-gray-600 dark:text-gray-400 mb-4">
-                Emergency access allows your trusted contacts to request access to your vault in case of emergency.
-                Requests must be approved by you within your configured waiting period ({{ current_user.emergency_wait_time_days }} days), 
-                after which they will be automatically approved.
-            </p>
-            <p class="text-gray-600 dark:text-gray-400">
-                You can adjust your emergency access settings in the 
-                <a href="{{ url_for('subscription.premium_features') }}" class="text-primary-600 dark:text-primary-400 hover:underline">Premium Features</a> page.
-            </p>
-        </div>
     </div>
 </div>
 {% endblock %}
