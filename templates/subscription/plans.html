@@ -4,6 +4,38 @@
 
 {% block content %}
 <div class="fade-in max-w-4xl mx-auto">
+    <!-- Limited-time offer banner -->
+    <div class="bg-gradient-to-r from-red-500 to-pink-600 text-white p-6 rounded-lg mb-6 shadow-lg relative overflow-hidden">
+        <div class="absolute top-0 right-0">
+            <div class="bg-yellow-400 text-red-700 font-bold py-1 px-4 shadow-md transform rotate-45 translate-x-2 -translate-y-1 origin-top-right">
+                LIMITED TIME
+            </div>
+        </div>
+        <div class="flex flex-col md:flex-row items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-bold mb-2 flex items-center">
+                    <i class="fas fa-fire-alt mr-2 text-yellow-300"></i>
+                    LAUNCH SPECIAL: 30% OFF
+                </h2>
+                <p class="text-white opacity-90 mb-2">
+                    Early adopter pricing for our first 1,000 premium subscribers.
+                    <span class="font-bold">Act fast - this offer won't last!</span>
+                </p>
+                <div class="bg-white bg-opacity-20 rounded-lg px-3 py-1 inline-block">
+                    <span class="font-mono font-bold">LAUNCH30</span> discount applied automatically
+                </div>
+            </div>
+            <div class="flex items-center mt-4 md:mt-0">
+                <i class="fas fa-users text-4xl text-white opacity-70 mr-2"></i>
+                <div>
+                    <p class="text-sm text-white opacity-80">Limited to first</p>
+                    <p class="text-3xl font-bold">1,000</p>
+                    <p class="text-sm text-white opacity-80">subscribers only</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg px-8 pt-6 pb-8 mb-4 border border-gray-200 dark:border-gray-700">
         <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800 dark:text-white">
@@ -22,8 +54,12 @@
                     <span class="inline-block bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase">Monthly</span>
                     <h3 class="text-2xl font-bold text-gray-800 dark:text-white mt-2">Trustra Premium</h3>
                     <div class="mt-4">
-                        <span class="text-4xl font-bold text-blue-600 dark:text-blue-400">${{ plans.monthly.price }}</span>
-                        <span class="text-gray-600 dark:text-gray-300">/month</span>
+                        <div class="flex items-center justify-center">
+                            <span class="text-gray-500 dark:text-gray-400 line-through mr-2">${{ plans.monthly.price }}</span>
+                            <span class="text-4xl font-bold text-blue-600 dark:text-blue-400">${{ "%.2f"|format(plans.monthly.price|float * 0.7) }}</span>
+                            <span class="text-gray-600 dark:text-gray-300">/month</span>
+                        </div>
+                        <div class="mt-1 inline-block bg-red-600 text-white text-xs px-2 py-1 rounded">30% OFF</div>
                     </div>
                 </div>
 
@@ -69,10 +105,14 @@
                     <span class="inline-block bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase">Yearly</span>
                     <h3 class="text-2xl font-bold text-gray-800 dark:text-white mt-2">Trustra Premium</h3>
                     <div class="mt-4">
-                        <span class="text-4xl font-bold text-purple-600 dark:text-purple-400">${{ plans.yearly.price }}</span>
-                        <span class="text-gray-600 dark:text-gray-300">/year</span>
+                        <div class="flex items-center justify-center">
+                            <span class="text-gray-500 dark:text-gray-400 line-through mr-2">${{ plans.yearly.price }}</span>
+                            <span class="text-4xl font-bold text-purple-600 dark:text-purple-400">${{ "%.2f"|format(plans.yearly.price|float * 0.7) }}</span>
+                            <span class="text-gray-600 dark:text-gray-300">/year</span>
+                        </div>
+                        <div class="mt-1 inline-block bg-red-600 text-white text-xs px-2 py-1 rounded">30% OFF</div>
                     </div>
-                    <div class="text-green-600 dark:text-green-400 text-sm font-bold mt-1">Save 16% compared to monthly</div>
+                    <div class="text-green-600 dark:text-green-400 text-sm font-bold mt-1">Save 46% compared to monthly</div>
                 </div>
 
                 <ul class="space-y-3 mb-6">

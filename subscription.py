@@ -66,7 +66,13 @@ def create_checkout_session():
             current_user.stripe_customer_id = customer.id
             db.session.commit()
         
-        # Create the checkout session
+        # Apply the 30% discount for early adopters (first 1000 subscribers)
+        # In a production environment, you would check a counter in the database
+        # For now, we'll apply it to everyone during the launch period
+        original_price = plan['price']
+        discounted_price = original_price * 0.7  # 30% off
+        
+        # Create the checkout session with discounted price
         checkout_session = stripe.checkout.Session.create(
             customer=current_user.stripe_customer_id,
             payment_method_types=['card'],
@@ -75,10 +81,10 @@ def create_checkout_session():
                     'price_data': {
                         'currency': 'usd',
                         'product_data': {
-                            'name': f'SecureVault Premium - {plan["name"]}',
-                            'description': plan['description'],
+                            'name': f'Trustra Premium - {plan["name"]} (LAUNCH30)',
+                            'description': f'{plan["description"]} - 30% Launch Discount Applied',
                         },
-                        'unit_amount': int(plan['price'] * 100),  # Convert dollars to cents
+                        'unit_amount': int(discounted_price * 100),  # Convert dollars to cents
                         'recurring': {
                             'interval': plan['interval'],
                         }
@@ -91,20 +97,24 @@ def create_checkout_session():
             cancel_url=domain_url + url_for('subscription.cancel'),
             metadata={
                 'user_id': current_user.id,
-                'plan_id': plan_id
+                'plan_id': plan_id,
+                'promotion': 'LAUNCH30',
+                'original_price': str(original_price),
+                'discount_percentage': '30'
             }
         )
         
         # Log the checkout URL
         checkout_url = checkout_session.url
-        logging.info(f"Created Stripe checkout session: {checkout_url}")
+        logging.info(f"Created Stripe checkout session with 30% discount: {checkout_url}")
         
         # Render a dedicated page that will handle the redirect to Stripe
         return render_template('subscription/checkout_redirect.html', 
                               checkout_url=checkout_url,
                               plan_name=plan['name'],
-                              plan_description=plan['description'],
-                              plan_price=plan['price'],
+                              plan_description=f'{plan["description"]} - 30% Launch Discount Applied',
+                              plan_price=discounted_price,
+                              original_price=original_price,
                               plan_interval=plan['interval'])
     except Exception as e:
         logging.error(f"Stripe error: {str(e)}")
