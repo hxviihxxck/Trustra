@@ -92,32 +92,54 @@ def create_checkout_session():
         # Log the price ID being used
         logging.info(f"Using price ID: {plan['price_id']}")
         
-        # Create the checkout session with existing price ID and apply discount
-        checkout_session = stripe.checkout.Session.create(
-            customer=current_user.stripe_customer_id,
-            payment_method_types=['card'],
-            line_items=[
+        # First, check if the LAUNCH30 coupon exists in Stripe or create it
+        try:
+            # Try to retrieve the coupon first
+            launch_coupon = None
+            try:
+                launch_coupon = stripe.Coupon.retrieve('LAUNCH30')
+                logging.info("LAUNCH30 coupon already exists in Stripe")
+            except Exception as e:
+                if "No such coupon" in str(e):
+                    # Coupon doesn't exist, create it
+                    logging.info("Creating LAUNCH30 coupon in Stripe")
+                    launch_coupon = stripe.Coupon.create(
+                        id='LAUNCH30',
+                        percent_off=30,
+                        duration='forever',
+                        name='30% Launch Discount'
+                    )
+        except Exception as coupon_error:
+            logging.error(f"Error with coupon: {str(coupon_error)}")
+            # Continue without discount if coupon fails
+            
+        # Create the checkout session with existing price ID and apply discount if available
+        checkout_params = {
+            'customer': current_user.stripe_customer_id,
+            'payment_method_types': ['card'],
+            'line_items': [
                 {
                     'price': plan['price_id'],
                     'quantity': 1,
                 },
             ],
-            discounts=[
-                {
-                    'coupon': 'LAUNCH30',  # Must match a coupon code in Stripe dashboard
-                },
-            ],
-            mode='subscription',
-            success_url=domain_url + url_for('subscription.success') + '?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=domain_url + url_for('subscription.cancel'),
-            metadata={
+            'mode': 'subscription',
+            'success_url': domain_url + url_for('subscription.success') + '?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url': domain_url + url_for('subscription.cancel'),
+            'metadata': {
                 'user_id': current_user.id,
                 'plan_id': plan_id,
                 'promotion': 'LAUNCH30',
                 'original_price': str(original_price),
                 'discount_percentage': '30'
             }
-        )
+        }
+        
+        # Add coupon if it was successfully retrieved or created
+        if locals().get('launch_coupon'):
+            checkout_params['discounts'] = [{'coupon': launch_coupon.id}]
+            
+        checkout_session = stripe.checkout.Session.create(**checkout_params)
         
         # Log the checkout URL
         checkout_url = checkout_session.url
