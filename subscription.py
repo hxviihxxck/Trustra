@@ -40,6 +40,7 @@ SUBSCRIPTION_PLANS = {
         'description': 'Unlock all premium features with yearly billing (save 16%)',
         'price': 49.99,  # Display price only
         'interval': 'year',
+        'product_id': 'prod_SEo2wOilwIp8ik',  # Yearly premium product ID
         'price_id': 'price_1PfP9oQ8pVR1OhK9ZLwsj7nH'  # Yearly premium price ID
     }
 }
@@ -119,6 +120,7 @@ def create_checkout_session():
             'payment_method_types': ['card'],
             'line_items': [
                 {
+                    # Use price_id for the specific price
                     'price': plan['price_id'],
                     'quantity': 1,
                 },
