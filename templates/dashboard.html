@@ -296,7 +296,11 @@
             fetch(`/get-password/${passwordId}`)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Failed to retrieve password');
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'Failed to retrieve password');
+                        }).catch(e => {
+                            throw new Error('Failed to retrieve password');
+                        });
                     }
                     return response.json();
                 })
@@ -308,11 +312,16 @@
                         if (element) {
                             element.__x.$data.password = data.password;
                         }
+                    } else {
+                        console.error('No password data returned');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Failed to retrieve password');
+                    alert(error.message || 'Failed to retrieve password');
+                    
+                    // Clear cache for this password ID to allow retrying
+                    delete passwordCache[passwordId];
                 });
             return '';
         }
@@ -327,7 +336,11 @@
             fetch(`/get-password/${passwordId}`)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Failed to retrieve password');
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'Failed to retrieve password');
+                        }).catch(e => {
+                            throw new Error('Failed to retrieve password');
+                        });
                     }
                     return response.json();
                 })
@@ -335,11 +348,17 @@
                     if (data.password) {
                         passwordCache[passwordId] = data.password;
                         copyToClipboard(data.password);
+                    } else {
+                        console.error('No password data returned');
+                        throw new Error('No password data returned');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Failed to retrieve password');
+                    alert(error.message || 'Failed to retrieve password');
+                    
+                    // Clear cache for this password ID to allow retrying
+                    delete passwordCache[passwordId];
                 });
         }
     }

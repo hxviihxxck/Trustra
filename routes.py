@@ -183,47 +183,64 @@ def add_password():
 @app.route('/edit-password/<int:password_id>', methods=['GET', 'POST'])
 @login_required
 def edit_password(password_id):
-    password_entry = PasswordEntry.query.get_or_404(password_id)
-    
-    # Verify that the password entry belongs to the current user
-    if password_entry.user_id != current_user.id:
-        flash('You do not have permission to edit this password.', 'danger')
-        return redirect(url_for('dashboard'))
-    
-    form = PasswordEntryForm()
-    
-    if form.validate_on_submit():
-        try:
-            # Update password entry
-            password_entry.title = form.title.data
-            password_entry.username = form.username.data
-            password_entry.url = form.url.data
-            password_entry.category = form.category.data
-            password_entry.notes = form.notes.data
-            
-            # Only update the password if a new one was provided
-            if form.password.data:
-                password_entry.set_password(form.password.data)
-            
-            db.session.commit()
-            
-            flash('Password updated successfully!', 'success')
+    try:
+        logging.debug(f"Editing password entry (ID: {password_id}, User ID: {current_user.id}, Title: {getattr(current_user, 'username', 'unknown')})")
+        password_entry = PasswordEntry.query.get_or_404(password_id)
+        
+        # Verify that the password entry belongs to the current user
+        if password_entry.user_id != current_user.id:
+            logging.warning(f"Permission denied: Password entry {password_id} belongs to user {password_entry.user_id}, not {current_user.id}")
+            flash('You do not have permission to edit this password.', 'danger')
             return redirect(url_for('dashboard'))
-        except Exception as e:
-            db.session.rollback()
-            logging.error(f"Edit password error: {str(e)}")
-            flash('An error occurred while updating your password. Please try again.', 'danger')
-    
-    # Pre-fill form with existing data
-    if request.method == 'GET':
-        form.title.data = password_entry.title
-        form.username.data = password_entry.username
-        form.url.data = password_entry.url
-        form.category.data = password_entry.category
-        form.notes.data = password_entry.notes
-        # We don't pre-fill the password for security reasons
-    
-    return render_template('edit_password.html', title='Edit Password', form=form, password_id=password_id)
+        
+        form = PasswordEntryForm()
+        
+        if form.validate_on_submit():
+            try:
+                logging.debug(f"Updating password entry {password_id}")
+                
+                # Update password entry
+                password_entry.title = form.title.data
+                password_entry.username = form.username.data
+                password_entry.url = form.url.data
+                password_entry.category = form.category.data
+                password_entry.notes = form.notes.data
+                
+                # Only update the password if a new one was provided
+                if form.password.data:
+                    logging.debug(f"Setting new password for entry {password_id}")
+                    try:
+                        password_entry.set_password(form.password.data)
+                        logging.debug(f"Password for entry {password_id} updated successfully")
+                    except Exception as pe:
+                        logging.error(f"Error setting password for entry {password_id}: {str(pe)}")
+                        raise pe
+                
+                db.session.commit()
+                logging.debug(f"Password entry {password_id} database commit successful")
+                
+                flash('Password updated successfully!', 'success')
+                return redirect(url_for('dashboard'))
+            except Exception as e:
+                db.session.rollback()
+                logging.error(f"Edit password error: {str(e)}")
+                flash(f'An error occurred while updating your password: {str(e)}', 'danger')
+        
+        # Pre-fill form with existing data
+        if request.method == 'GET':
+            logging.debug(f"Loading existing data for password entry {password_id}")
+            form.title.data = password_entry.title
+            form.username.data = password_entry.username
+            form.url.data = password_entry.url
+            form.category.data = password_entry.category
+            form.notes.data = password_entry.notes
+            # We don't pre-fill the password for security reasons
+        
+        return render_template('edit_password.html', title='Edit Password', form=form, password_id=password_id)
+    except Exception as e:
+        logging.error(f"Edit password page error: {str(e)}")
+        flash(f'An error occurred while loading the password entry: {str(e)}', 'danger')
+        return redirect(url_for('dashboard'))
 
 # Delete password
 @app.route('/delete-password/<int:password_id>', methods=['POST'])
