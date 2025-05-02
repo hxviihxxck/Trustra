@@ -149,9 +149,9 @@ class PasswordEntry(db.Model):
     history = db.relationship('PasswordHistory', backref='password_entry', lazy='dynamic', cascade="all, delete-orphan")
     
     def set_password(self, plaintext_password):
+        from app import db  # Import db here to ensure it's available throughout the method
         # Make sure owner is loaded
         if not hasattr(self, 'owner') or self.owner is None:
-            from app import db
             if self.user_id:
                 logging.debug(f"Loading owner for password entry with user_id={self.user_id}")
                 # Try to find owner with two different methods
@@ -208,9 +208,9 @@ class PasswordEntry(db.Model):
         self.calculate_strength(plaintext_password)
     
     def get_password(self):
+        from app import db  # Import db here to ensure it's available throughout the method
         # Make sure owner is loaded
         if not hasattr(self, 'owner') or self.owner is None:
-            from app import db
             if self.user_id:
                 logging.debug(f"Loading owner for decryption with user_id={self.user_id}")
                 # Try to find owner with two different methods
