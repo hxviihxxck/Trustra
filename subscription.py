@@ -33,6 +33,7 @@ SUBSCRIPTION_PLANS = {
         'description': 'Unlock all premium features with monthly billing',
         'price': 4.99,  # Display price only
         'interval': 'month',
+        'product_id': 'prod_SEo0EiQ8QwgXu7',  # Monthly premium product ID
         'price_id': 'price_1PfP9ZQ8pVR1OhK9NNfsgJSo'  # Monthly premium price ID
     },
     'yearly': {
@@ -73,17 +74,35 @@ def create_checkout_session():
     domain_url = request.host_url.rstrip('/')
     
     try:
-        # Create a new customer in Stripe if the user doesn't have one
-        if not current_user.stripe_customer_id:
-            customer = stripe.Customer.create(
-                email=current_user.email,
-                name=current_user.username,
-                metadata={
-                    'user_id': current_user.id
-                }
-            )
-            current_user.stripe_customer_id = customer.id
-            db.session.commit()
+        # Always create a new customer in Stripe 
+        # This ensures we have a fresh customer ID that exists in Stripe
+        try:
+            # First check if the existing customer ID is valid
+            if current_user.stripe_customer_id:
+                try:
+                    # Try to retrieve the customer
+                    stripe.Customer.retrieve(current_user.stripe_customer_id)
+                    logging.info(f"Using existing Stripe customer: {current_user.stripe_customer_id}")
+                except Exception as e:
+                    # If not found, we'll create a new one
+                    logging.info(f"Existing customer ID invalid: {str(e)}")
+                    current_user.stripe_customer_id = None
+            
+            # Create a new customer if needed
+            if not current_user.stripe_customer_id:
+                customer = stripe.Customer.create(
+                    email=current_user.email,
+                    name=current_user.username,
+                    metadata={
+                        'user_id': current_user.id
+                    }
+                )
+                current_user.stripe_customer_id = customer.id
+                db.session.commit()
+                logging.info(f"Created new Stripe customer: {customer.id}")
+        except Exception as customer_error:
+            logging.error(f"Error with customer: {str(customer_error)}")
+            # Continue without setting customer ID if it fails
         
         # Apply the 30% discount for early adopters using coupon
         # Store the display prices for the template
