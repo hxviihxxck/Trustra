@@ -178,14 +178,14 @@
                                 <span class="text-sm font-medium text-gray-600 dark:text-gray-400 w-24">Password:</span>
                                 <div class="relative flex-grow group">
                                     <span x-show="!showPassword" class="text-sm text-gray-800 dark:text-gray-200">••••••••••••</span>
-                                    <span x-show="showPassword" x-init="$data.password = loadPassword({{ password.id }})" x-text="password || '••••••••••••'" class="text-sm text-gray-800 dark:text-gray-200 mr-2"></span>
+                                    <span x-show="showPassword" x-text="fetchAndShowPassword({{ password.id }})" class="text-sm text-gray-800 dark:text-gray-200 mr-2"></span>
                                     <div class="absolute right-0 top-0 flex opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button @click="showPassword = !showPassword" class="text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 mr-2">
                                             <i x-show="!showPassword" class="fas fa-eye"></i>
                                             <i x-show="showPassword" class="fas fa-eye-slash"></i>
                                         </button>
                                         <button x-show="showPassword" class="copy-btn text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
-                                                x-on:click="copyPasswordToClipboard({{ password.id }})">
+                                                onclick="copyPasswordToClipboard({{ password.id }})">
                                             <i class="fas fa-copy"></i>
                                         </button>
                                     </div>
@@ -290,7 +290,46 @@
     // Dictionary to store decrypted passwords
     let passwordCache = {};
     
-    // Function to load password
+    // Function to fetch and show password - direct approach without Alpine.js data binding
+    function fetchAndShowPassword(passwordId) {
+        if (passwordCache[passwordId]) {
+            return passwordCache[passwordId];
+        }
+        
+        // If not in cache, start loading and return placeholder
+        fetch(`/get-password/${passwordId}`)
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Failed to retrieve password');
+                    }).catch(e => {
+                        throw new Error('Failed to retrieve password');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.password) {
+                    // Store in cache
+                    passwordCache[passwordId] = data.password;
+                    
+                    // Force Alpine to re-evaluate text by modifying DOM
+                    const spans = document.querySelectorAll(`span[x-text="fetchAndShowPassword(${passwordId})"]`);
+                    spans.forEach(span => {
+                        // This triggers Alpine's reactivity
+                        span.textContent = data.password;
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching password:', error);
+                alert(error.message || 'Failed to retrieve password');
+            });
+        
+        return '••••••••••••';
+    }
+    
+    // Original function to load password (kept for compatibility)
     function loadPassword(passwordId) {
         if (!passwordCache[passwordId]) {
             fetch(`/get-password/${passwordId}`)
