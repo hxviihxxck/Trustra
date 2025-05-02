@@ -253,18 +253,25 @@ def delete_password(password_id):
 @login_required
 def get_password(password_id):
     try:
+        logging.debug(f"Retrieving password entry (ID: {password_id}, User ID: {current_user.id}, Title: {current_user.username})")
         password_entry = PasswordEntry.query.get_or_404(password_id)
         
         # Verify that the password entry belongs to the current user
         if password_entry.user_id != current_user.id:
+            logging.error(f"Access denied: Password entry {password_id} belongs to user {password_entry.user_id}, not {current_user.id}")
             return jsonify({"error": "Access denied"}), 403
         
         # Decrypt and return the password
-        decrypted_password = password_entry.get_password()
-        return jsonify({"password": decrypted_password}), 200
+        try:
+            decrypted_password = password_entry.get_password()
+            logging.debug(f"Successfully retrieved password for entry {password_id}")
+            return jsonify({"password": decrypted_password}), 200
+        except ValueError as ve:
+            logging.error(f"Decryption error for password {password_id}: {str(ve)}")
+            return jsonify({"error": f"Failed to decrypt password: {str(ve)}"}), 500
     except Exception as e:
         logging.error(f"Get password error: {str(e)}")
-        return jsonify({"error": "Failed to retrieve password"}), 500
+        return jsonify({"error": f"Failed to retrieve password: {str(e)}"}), 500
 
 # Error handlers
 @app.errorhandler(404)
