@@ -310,32 +310,7 @@ def internal_error(error):
 def handle_bad_request(error):
     return render_template('error.html', error_code=400, error_message="Bad request"), 400
 
-# Demo route for upgrading to premium (for demonstration purposes only)
-@app.route('/demo-upgrade-premium', methods=['GET', 'POST'])
-@login_required
-def demo_upgrade_premium():
-    """Upgrade current user to premium for demonstration purposes"""
-    from datetime import datetime, timedelta
-    
-    try:
-        # Set premium status
-        current_user.is_premium = True
-        current_user.subscription_status = 'active'
-        current_user.subscription_end_date = datetime.utcnow() + timedelta(days=365)  # Set to expire in 1 year
-        
-        # Set a placeholder subscription ID
-        if not current_user.subscription_id:
-            current_user.subscription_id = f"demo_sub_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-        
-        db.session.commit()
-        
-        flash('Your account has been upgraded to premium for demonstration purposes!', 'success')
-        return redirect(url_for('subscription.premium_features'))
-    except Exception as e:
-        db.session.rollback()
-        logging.error(f"Demo premium upgrade error: {str(e)}")
-        flash('An error occurred while upgrading your account. Please try again.', 'danger')
-        return redirect(url_for('dashboard'))
+
 
 # Admin dashboard (protected route)
 @app.route('/admin-dashboard')
