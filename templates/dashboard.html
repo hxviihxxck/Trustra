@@ -177,15 +177,18 @@
                             <div class="flex items-center">
                                 <span class="text-sm font-medium text-gray-600 dark:text-gray-400 w-24">Password:</span>
                                 <div class="relative flex-grow group">
-                                    <span x-show="!showPassword" class="text-sm text-gray-800 dark:text-gray-200">••••••••••••</span>
-                                    <span x-show="showPassword" x-text="fetchAndShowPassword({{ password.id }})" class="text-sm text-gray-800 dark:text-gray-200 mr-2"></span>
+                                    <!-- Password fields - one hidden and one visible -->
+                                    <span id="password-hidden-{{ password.id }}" class="text-sm text-gray-800 dark:text-gray-200">••••••••••••</span>
+                                    <span id="password-text-{{ password.id }}" class="text-sm text-gray-800 dark:text-gray-200 mr-2" style="display:none;"></span>
+                                    
                                     <div class="absolute right-0 top-0 flex opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button @click="showPassword = !showPassword" class="text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 mr-2">
-                                            <i x-show="!showPassword" class="fas fa-eye"></i>
-                                            <i x-show="showPassword" class="fas fa-eye-slash"></i>
+                                        <button id="toggle-btn-{{ password.id }}" onclick="togglePasswordVisibility({{ password.id }})" 
+                                                class="text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 mr-2">
+                                            <i id="eye-icon-{{ password.id }}" class="fas fa-eye"></i>
                                         </button>
-                                        <button x-show="showPassword" class="copy-btn text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
-                                                onclick="copyPasswordToClipboard({{ password.id }})">
+                                        <button id="copy-btn-{{ password.id }}" onclick="copyPasswordToClipboard({{ password.id }})" 
+                                                class="copy-btn text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                                                style="display:none;">
                                             <i class="fas fa-copy"></i>
                                         </button>
                                     </div>
@@ -289,6 +292,68 @@
 <script>
     // Dictionary to store decrypted passwords
     let passwordCache = {};
+    
+    // Function to toggle password visibility
+    function togglePasswordVisibility(passwordId) {
+        const hiddenElement = document.getElementById(`password-hidden-${passwordId}`);
+        const textElement = document.getElementById(`password-text-${passwordId}`);
+        const eyeIcon = document.getElementById(`eye-icon-${passwordId}`);
+        const copyBtn = document.getElementById(`copy-btn-${passwordId}`);
+        
+        if (hiddenElement.style.display !== "none") {
+            // Show the password
+            hiddenElement.style.display = "none";
+            
+            // Check if we already have the password in cache
+            if (passwordCache[passwordId]) {
+                textElement.textContent = passwordCache[passwordId];
+                textElement.style.display = "inline";
+                eyeIcon.className = "fas fa-eye-slash";
+                copyBtn.style.display = "inline-block";
+            } else {
+                // Fetch password
+                textElement.textContent = "Loading...";
+                textElement.style.display = "inline";
+                
+                fetch(`/get-password/${passwordId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                throw new Error(data.error || 'Failed to retrieve password');
+                            }).catch(e => {
+                                throw new Error('Failed to retrieve password');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.password) {
+                            passwordCache[passwordId] = data.password;
+                            textElement.textContent = data.password;
+                            eyeIcon.className = "fas fa-eye-slash";
+                            copyBtn.style.display = "inline-block";
+                        } else {
+                            throw new Error('No password data returned');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        textElement.textContent = "Error loading password";
+                        setTimeout(() => {
+                            textElement.style.display = "none";
+                            hiddenElement.style.display = "inline";
+                            eyeIcon.className = "fas fa-eye";
+                        }, 2000);
+                    });
+            }
+        } else {
+            // Hide the password
+            hiddenElement.style.display = "inline";
+            textElement.style.display = "none";
+            eyeIcon.className = "fas fa-eye";
+            copyBtn.style.display = "none";
+        }
+    }
     
     // Function to fetch and show password - direct approach without Alpine.js data binding
     function fetchAndShowPassword(passwordId) {
