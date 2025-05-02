@@ -25,24 +25,22 @@ if stripe.api_key:
     }
 logging.info(f"Stripe API Key information: {key_info}")
 
-# Define the plans using Stripe Product/Price IDs (recommended for production)
-# These IDs should match your Stripe Dashboard products and prices
+# Define the plans using Stripe Product IDs (recommended for production)
+# These IDs should match your Stripe Dashboard products
 SUBSCRIPTION_PLANS = {
     'monthly': {
         'name': 'Monthly Premium',
         'description': 'Unlock all premium features with monthly billing',
         'price': 4.99,  # Display price only
         'interval': 'month',
-        'product_id': 'prod_SEo0EiQ8QwgXu7',  # Monthly premium product ID
-        'price_id': 'price_1PfP9ZQ8pVR1OhK9NNfsgJSo'  # Monthly premium price ID
+        'product_id': 'prod_SEo0EiQ8QwgXu7'  # Monthly premium product ID
     },
     'yearly': {
         'name': 'Yearly Premium',
         'description': 'Unlock all premium features with yearly billing (save 16%)',
         'price': 49.99,  # Display price only
         'interval': 'year',
-        'product_id': 'prod_SEo2wOilwIp8ik',  # Yearly premium product ID
-        'price_id': 'price_1PfP9oQ8pVR1OhK9ZLwsj7nH'  # Yearly premium price ID
+        'product_id': 'prod_SEo2wOilwIp8ik'  # Yearly premium product ID
     }
 }
 
@@ -109,8 +107,8 @@ def create_checkout_session():
         original_price = plan['price']
         discounted_price = original_price * 0.7  # 30% off for display purposes
         
-        # Log the price ID being used
-        logging.info(f"Using price ID: {plan['price_id']}")
+        # Log the product ID being used
+        logging.info(f"Using product ID: {plan['product_id']}")
         
         # First, check if the LAUNCH30 coupon exists in Stripe or create it
         try:
@@ -139,8 +137,15 @@ def create_checkout_session():
             'payment_method_types': ['card'],
             'line_items': [
                 {
-                    # Use price_id for the specific price
-                    'price': plan['price_id'],
+                    # Use product ID instead of price ID for this product
+                    'price_data': {
+                        'product': plan['product_id'],
+                        'currency': 'usd',
+                        'recurring': {
+                            'interval': plan['interval']
+                        },
+                        'unit_amount': int(plan['price'] * 100)  # Price in cents
+                    },
                     'quantity': 1,
                 },
             ],
