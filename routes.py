@@ -47,8 +47,14 @@ def register():
             db.session.add(user)
             db.session.commit()
             
-            flash('Your account has been created! You can now log in.', 'success')
-            return redirect(url_for('login'))
+            # Automatically log the user in after registration
+            login_user(user)
+            
+            # Set session flag to indicate normal mode (not hidden vault)
+            session['hidden_vault_mode'] = False
+            
+            flash('Your account has been created! You are now logged in.', 'success')
+            return redirect(url_for('dashboard'))
         except Exception as e:
             db.session.rollback()
             logging.error(f"Registration error: {str(e)}")
