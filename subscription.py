@@ -1,7 +1,11 @@
 import os
 import stripe
 import logging
+import traceback
 from datetime import datetime, timedelta
+
+# Set up detailed logging
+logging.basicConfig(level=logging.DEBUG)
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, current_app, session, Response
 from flask_login import login_required, current_user
 from app import db
@@ -11,21 +15,32 @@ from forms import SubscriptionForm
 # Set up Stripe API key from environment variables
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
-# Define the plans - these should match your Stripe product/price IDs
-# For development/testing, we'll use the test mode functionality instead of specific price IDs
-# This approach uses the price parameter directly instead of a price ID
+# Log some information about the API key for debugging
+key_info = None
+if stripe.api_key:
+    key_info = {
+        'length': len(stripe.api_key),
+        'prefix': stripe.api_key[:7] + '...' if len(stripe.api_key) > 10 else '',
+        'is_live': stripe.api_key.startswith('sk_live_')
+    }
+logging.info(f"Stripe API Key information: {key_info}")
+
+# Define the plans using Stripe Product/Price IDs (recommended for production)
+# These IDs should match your Stripe Dashboard products and prices
 SUBSCRIPTION_PLANS = {
     'monthly': {
         'name': 'Monthly Premium',
         'description': 'Unlock all premium features with monthly billing',
-        'price': 4.99,
-        'interval': 'month'
+        'price': 4.99,  # Display price only
+        'interval': 'month',
+        'price_id': 'price_1PfP9ZQ8pVR1OhK9NNfsgJSo'  # Monthly premium price ID
     },
     'yearly': {
         'name': 'Yearly Premium',
         'description': 'Unlock all premium features with yearly billing (save 16%)',
-        'price': 49.99,
-        'interval': 'year'
+        'price': 49.99,  # Display price only
+        'interval': 'year',
+        'price_id': 'price_1PfP9oQ8pVR1OhK9ZLwsj7nH'  # Yearly premium price ID
     }
 }
 
@@ -69,30 +84,27 @@ def create_checkout_session():
             current_user.stripe_customer_id = customer.id
             db.session.commit()
         
-        # Apply the 30% discount for early adopters (first 1000 subscribers)
-        # In a production environment, you would check a counter in the database
-        # For now, we'll apply it to everyone during the launch period
+        # Apply the 30% discount for early adopters using coupon
+        # Store the display prices for the template
         original_price = plan['price']
-        discounted_price = original_price * 0.7  # 30% off
+        discounted_price = original_price * 0.7  # 30% off for display purposes
         
-        # Create the checkout session with discounted price
+        # Log the price ID being used
+        logging.info(f"Using price ID: {plan['price_id']}")
+        
+        # Create the checkout session with existing price ID and apply discount
         checkout_session = stripe.checkout.Session.create(
             customer=current_user.stripe_customer_id,
             payment_method_types=['card'],
             line_items=[
                 {
-                    'price_data': {
-                        'currency': 'usd',
-                        'product_data': {
-                            'name': f'Trustra Premium - {plan["name"]} (LAUNCH30)',
-                            'description': f'{plan["description"]} - 30% Launch Discount Applied',
-                        },
-                        'unit_amount': int(discounted_price * 100),  # Convert dollars to cents
-                        'recurring': {
-                            'interval': plan['interval'],
-                        }
-                    },
+                    'price': plan['price_id'],
                     'quantity': 1,
+                },
+            ],
+            discounts=[
+                {
+                    'coupon': 'LAUNCH30',  # Must match a coupon code in Stripe dashboard
                 },
             ],
             mode='subscription',
@@ -120,8 +132,15 @@ def create_checkout_session():
                               original_price=original_price,
                               plan_interval=plan['interval'])
     except Exception as e:
+        error_trace = traceback.format_exc()
         logging.error(f"Stripe error: {str(e)}")
-        flash('An error occurred while processing your subscription request. Please try again.', 'danger')
+        logging.error(f"Traceback: {error_trace}")
+        logging.error(f"Stripe Key: {'Valid' if stripe.api_key else 'Invalid/Empty'}")
+        logging.error(f"Plan data: {plan}")
+        logging.error(f"Discounted price: {discounted_price}")
+        
+        # More user-friendly error message
+        flash(f'An error occurred while processing your subscription request: {str(e)}. Please try again or contact support.', 'danger')
         return redirect(url_for('subscription.plans'))
 
 @subscription_bp.route('/subscription/success')
