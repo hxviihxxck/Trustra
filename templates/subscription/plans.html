@@ -2,6 +2,18 @@
 
 {% block title %}Premium Subscription Plans - Trustra{% endblock %}
 
+{% block extra_scripts %}
+<!-- Add Stripe JS if needed for client-side integration -->
+{% if stripe_publishable_key %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    // Initialize Stripe with the publishable key
+    const stripe = Stripe('{{ stripe_publishable_key }}');
+    // The key is now available for any client-side Stripe functionality if needed
+</script>
+{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="fade-in max-w-4xl mx-auto">
     <!-- Limited-time offer banner -->

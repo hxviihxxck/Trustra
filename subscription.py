@@ -36,7 +36,10 @@ subscription_bp = Blueprint('subscription', __name__)
 @login_required
 def plans():
     """Display available subscription plans"""
-    return render_template('subscription/plans.html', plans=SUBSCRIPTION_PLANS)
+    stripe_publishable_key = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
+    return render_template('subscription/plans.html', 
+                          plans=SUBSCRIPTION_PLANS,
+                          stripe_publishable_key=stripe_publishable_key)
 
 @subscription_bp.route('/subscription/create-checkout-session', methods=['POST'])
 @login_required
