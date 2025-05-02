@@ -238,12 +238,33 @@ def password_history(password_id):
     try:
         # Get the password entry and ensure it belongs to the current user
         password_entry = PasswordEntry.query.get_or_404(password_id)
+        
+        # Enhanced logging for debugging
+        logging.debug(f"Retrieving password entry (ID: {password_id}, User ID: {password_entry.user_id}, Title: {password_entry.title})")
+        
         if password_entry.user_id != current_user.id:
             flash('You do not have permission to view this password history.', 'danger')
             return redirect(url_for('dashboard'))
         
+        # Try to get the password to verify encryption/decryption is working
+        try:
+            current_password = password_entry.get_password()
+            logging.debug(f"Successfully retrieved current password for entry {password_id}")
+        except Exception as e:
+            logging.error(f"Failed to decrypt current password: {str(e)}")
+            flash('There was an issue retrieving the current password data.', 'warning')
+            
         # Get all history entries for this password
         history = password_entry.history.order_by(PasswordHistory.date_changed.desc()).all()
+        logging.debug(f"Found {len(history)} history entries for password {password_id}")
+        
+        # Pre-process history entries to catch decryption errors before rendering
+        for entry in history:
+            try:
+                # Try to get old password to verify it works
+                entry.get_old_password(current_user)
+            except Exception as e:
+                logging.error(f"Pre-processing error for history entry {entry.id}: {str(e)}")
         
         return render_template('premium/password_history.html', 
                               password_entry=password_entry, 
@@ -289,7 +310,14 @@ def request_emergency_access():
         db.session.add(request_entry)
         db.session.commit()
         
-        # In a real implementation, we would send email notifications here
+        # Send email notification to the vault owner
+        from utils import send_emergency_access_request_notification
+        email_sent = send_emergency_access_request_notification(user, requester_email, expires_at)
+        
+        if email_sent:
+            logging.info(f"Emergency access notification email sent to {user.email}")
+        else:
+            logging.error(f"Failed to send emergency access notification email to {user.email}")
         
         flash('Emergency access request has been submitted. The account owner has been notified and has the option to approve or deny your request. If no action is taken, access will be granted after the waiting period.', 'info')
     except Exception as e:
@@ -326,19 +354,45 @@ def handle_emergency_request(request_id, action):
             flash('You do not have permission to manage this emergency access request.', 'danger')
             return redirect(url_for('dashboard'))
         
+        from utils import send_emergency_access_granted_notification, send_emergency_access_denied_notification
+        
         if action == 'approve':
             emergency_request.status = 'approved'
-            flash('Emergency access request has been approved.', 'success')
+            
+            # Send approval notification
+            email_sent = send_emergency_access_granted_notification(
+                current_user.email, 
+                emergency_request.requester_email
+            )
+            
+            if email_sent:
+                logging.info(f"Emergency access granted notification sent to {emergency_request.requester_email}")
+            else:
+                logging.error(f"Failed to send emergency access granted notification to {emergency_request.requester_email}")
+                
+            flash('Emergency access request has been approved. The requester has been notified.', 'success')
+            
         elif action == 'deny':
             emergency_request.status = 'denied'
-            flash('Emergency access request has been denied.', 'success')
+            
+            # Send denial notification
+            email_sent = send_emergency_access_denied_notification(
+                current_user.email, 
+                emergency_request.requester_email
+            )
+            
+            if email_sent:
+                logging.info(f"Emergency access denied notification sent to {emergency_request.requester_email}")
+            else:
+                logging.error(f"Failed to send emergency access denied notification to {emergency_request.requester_email}")
+                
+            flash('Emergency access request has been denied. The requester has been notified.', 'success')
+            
         else:
             flash('Invalid action.', 'danger')
             return redirect(url_for('premium.view_emergency_requests'))
         
         db.session.commit()
-        
-        # In a real implementation, we would send email notifications here
         
     except Exception as e:
         logging.error(f"Error handling emergency request: {str(e)}")
