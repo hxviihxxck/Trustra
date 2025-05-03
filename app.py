@@ -2,46 +2,31 @@ import os
 import logging
 
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from flask_wtf.csrf import CSRFProtect
-from sqlalchemy.orm import DeclarativeBase
-from werkzeug.middleware.proxy_fix import ProxyFix
 from config import Config
-
+from extensions import db, login_manager, csrf  # ✅ Use these directly
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
-
-# Create a base class for SQLAlchemy models
-class Base(DeclarativeBase):
-    pass
-
-# Initialize extensions
-db = SQLAlchemy(model_class=Base)
-login_manager = LoginManager()
-csrf = CSRFProtect()
 
 # Create the Flask application
 app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = os.environ.get("SESSION_SECRET", os.urandom(24))
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # needed for url_for to generate with https
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Initialize extensions with the app
+# Initialize extensions
 db.init_app(app)
 login_manager.init_app(app)
 csrf.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'info'
 
-# Import routes after initializing extensions to avoid circular imports
+# Register routes and blueprints
 with app.app_context():
-    # Import models and routes
     from models import User, PasswordEntry
     from routes import *
     from routes_emergency import emergency_bp
     app.register_blueprint(emergency_bp)
     
-    # Create all database tables
     db.create_all()
