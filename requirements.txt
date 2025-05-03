@@ -6,3 +6,4 @@ python-dotenv
 gunicorn
 cryptography
 stripe
+email_validator
