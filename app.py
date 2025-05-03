@@ -9,6 +9,7 @@ from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 from config import Config
 
+
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -39,6 +40,8 @@ with app.app_context():
     # Import models and routes
     from models import User, PasswordEntry
     from routes import *
+    from routes_emergency import emergency_bp
+    app.register_blueprint(emergency_bp)
     
     # Create all database tables
     db.create_all()
