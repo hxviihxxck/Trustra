@@ -194,36 +194,8 @@ def create_checkout_session():
 @subscription_bp.route('/subscription/success')
 @login_required
 def success():
-    """Handle successful subscription checkout"""
-    session_id = request.args.get('session_id')
-    
-    if not session_id:
-        flash('Invalid checkout session.', 'danger')
-        return redirect(url_for('dashboard'))
-    
-    try:
-        # Retrieve the checkout session to get subscription details
-        checkout_session = stripe.checkout.Session.retrieve(session_id)
-        subscription_id = checkout_session.subscription
-        
-        # Update user with subscription information
-        current_user.subscription_id = subscription_id
-        current_user.is_premium = True
-        current_user.subscription_status = 'active'
-        
-        # Set subscription end date based on subscription period
-        subscription = stripe.Subscription.retrieve(subscription_id)
-        end_timestamp = subscription.current_period_end
-        current_user.subscription_end_date = datetime.fromtimestamp(end_timestamp)
-        
-        db.session.commit()
-        
-        flash('Subscription activated successfully! You now have access to all premium features.', 'success')
-        return redirect(url_for('subscription.premium_features'))
-    except Exception as e:
-        logging.error(f"Error processing subscription success: {str(e)}")
-        flash('There was an issue activating your subscription. Please contact support.', 'danger')
-        return redirect(url_for('dashboard'))
+    flash('Subscription activated successfully! You now have access to all premium features.', 'success')
+    return redirect(url_for('subscription.premium_features'))
 
 @subscription_bp.route('/subscription/cancel')
 @login_required
@@ -288,37 +260,44 @@ def premium_features():
 
 @subscription_bp.route('/webhook/stripe', methods=['POST'])
 def stripe_webhook():
-    """Handle Stripe webhook events"""
     payload = request.data
     sig_header = request.headers.get('Stripe-Signature')
-    
-    # This endpoint should be configured in the Stripe dashboard and the signing secret set in environment variables
     endpoint_secret = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
-    
     event = None
-    
+
     try:
         if endpoint_secret:
             event = stripe.Webhook.construct_event(
                 payload, sig_header, endpoint_secret
             )
         else:
-            # For development purposes, we can parse the payload directly
             event = stripe.Event.construct_from(
                 request.json, stripe.api_key
             )
     except Exception as e:
         logging.error(f"Webhook error: {str(e)}")
         return jsonify({'error': str(e)}), 400
-    
-    # Handle the event
-    if event.type == 'customer.subscription.updated':
-        subscription = event.data.object
-        handle_subscription_updated(subscription)
-    elif event.type == 'customer.subscription.deleted':
-        subscription = event.data.object
-        handle_subscription_deleted(subscription)
-    
+
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        customer_id = session.get('customer')
+        subscription_id = session.get('subscription')
+
+        # Retrieve the user from your database using customer_id
+        user = User.query.filter_by(stripe_customer_id=customer_id).first()
+        if user:
+            user.subscription_id = subscription_id
+            user.is_premium = True
+            user.subscription_status = 'active'
+            subscription = stripe.Subscription.retrieve(subscription_id)
+            user.subscription_end_date = datetime.fromtimestamp(subscription.current_period_end)
+            db.session.commit()
+            logging.info(f"Subscription activated for user {user.id}")
+        else:
+            logging.warning(f"No user found with Stripe customer ID: {customer_id}")
+
+    # Handle other event types as needed
+
     return jsonify({'status': 'success'})
 
 def handle_subscription_updated(subscription):
