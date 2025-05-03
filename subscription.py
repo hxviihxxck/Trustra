@@ -137,14 +137,13 @@ def create_checkout_session():
             'payment_method_types': ['card'],
             'line_items': [
                 {
-                    # Use product ID instead of price ID for this product
                     'price_data': {
                         'product': plan['product_id'],
                         'currency': 'usd',
                         'recurring': {
                             'interval': plan['interval']
                         },
-                        'unit_amount': int(plan['price'] * 100)  # Price in cents
+                        'unit_amount': int(plan['price'] * 100)
                     },
                     'quantity': 1,
                 },
@@ -158,7 +157,8 @@ def create_checkout_session():
                 'promotion': 'LAUNCH30',
                 'original_price': str(original_price),
                 'discount_percentage': '30'
-            }
+            },
+            'automatic_tax': {'enabled': True}  # ✅ Add this line
         }
         
         # Add coupon if it was successfully retrieved or created
